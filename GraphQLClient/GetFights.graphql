@@ -1,0 +1,10 @@
+query GetFights($code: String!) {
+  reportData {
+    report(code: $code) {
+      fights {
+        id
+        name
+      }
+    }
+  }
+}

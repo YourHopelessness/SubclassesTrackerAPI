@@ -1,0 +1,27 @@
+query GetReportsWithFights(
+  $zoneID: Int!,
+  $page: Int!,
+  $limit: Int!,
+  $difficulty: Int,
+  $killType: KillType,
+  $startTime: Float!,
+  $endTime: Float!
+) {
+  reportData {
+    reports(zoneID: $zoneID, page: $page, limit: $limit, startTime: $startTime, endTime: $endTime) {
+      data {
+        zone {
+            id, 
+            name
+        },
+        code
+        fights(difficulty: $difficulty, killType: $killType) {
+          id
+          name
+          trialScore
+        }
+      }
+      has_more_pages
+    }
+  }
+}

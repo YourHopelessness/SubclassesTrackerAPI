@@ -1,0 +1,7 @@
+﻿query GetBuffs($code: String!, $fightIds: [Int!]!, $playerId: Int!) {
+    reportData {
+        report(code: $code) {
+            table(fightIDs: $fightIds, dataType: Buffs, sourceID: $playerId, targetID: $playerId)
+        }
+    }
+}

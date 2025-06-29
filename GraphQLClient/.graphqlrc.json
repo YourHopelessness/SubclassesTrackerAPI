@@ -1,0 +1,23 @@
+{
+  "schema": "schema.graphql",
+  "documents": "**/*.graphql",
+  "extensions": {
+    "strawberryShake": {
+      "name": "GraphQLClient",
+      "url": "https://www.esologs.com/api/v2",
+      "records": {
+        "inputs": false,
+        "entities": false
+      },
+      "headers": {
+        "Authorization": "Bearer TOKEN" // Change before generation
+      },
+      "transportProfiles": [
+        {
+          "default": "Http",
+          "subscription": "WebSocket"
+        }
+      ]
+    }
+  }
+}
