@@ -22,9 +22,6 @@ installed and run:
  dotnet build
 ```
 
-Some functionality depends on the `SubclassesTracker.Database` project which is
-referenced in the solution but not included in this repository.
-
 ## Configuration
 
 Application settings are stored in `appsettings.json`. Important values are
