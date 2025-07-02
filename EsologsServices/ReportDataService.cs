@@ -1,65 +1,66 @@
-﻿using DocumentFormat.OpenXml.Spreadsheet;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using SubclassesTrackerExtension.ExcelServices;
+using SubclassesTracker.Database.Entity;
+using SubclassesTracker.Database.Repository;
 using SubclassesTrackerExtension.Models;
 using System.Linq;
-using static SubclassesTrackerExtension.ExcelServices.ExcelParserService;
 
 namespace SubclassesTrackerExtension.EsologsServices
 {
     public interface IReportDataService
     {
-        Task<List<SkillLineReportModel>> GetSkillLinesAsync(int zoneId);
+        /// <summary>
+        /// Retrieves skill lines for a specific zone (trial) based on the provided zone ID.
+        /// </summary>
+        /// <param name="zoneId">Id of zone</param>
+        /// <param name="token">Cancellation token</param>
+        /// <returns></returns>
+        Task<List<SkillLineReportModel>> GetSkillLinesAsync(
+            int zoneId,
+            int difficulty,
+            bool useScoreCense = false,
+            CancellationToken token = new CancellationToken());
     }
     public class ReportDataService(
         IOptions<LinesConfig> options,
-        IGetDataService dataService) : IReportDataService
+        IGetDataService dataService,
+        IBaseRepository<SkillTreeEntry> skillsRepository,
+        IBaseRepository<Encounter> encounterRepository) : IReportDataService
     {
         private sealed record PlayerKey(string Name, string TrialName, string Display, string Spec);
-        private readonly Dictionary<string, SkillInfo> skillsDict = LoadSkills(options.Value.LinesSkillExcel);
-        private static List<SkillLinesModel> BuildLines(
-            IEnumerable<PlayerRow> players,
-            IReadOnlyDictionary<string, SkillInfo> skillsDict)
+        private Dictionary<int, SkillInfo> skillsDict = [];
+        private sealed record SkillInfo(string SkillName, string SkillLine);
+       
+        public async Task<List<SkillLineReportModel>> GetSkillLinesAsync(
+            int zoneId,
+            int difficulty,
+            bool useScoreCense = false,
+            CancellationToken token = new CancellationToken())
         {
-            var flatten = players
-                    .SelectMany(p => p.Talents
-                         .Where(t => skillsDict.ContainsKey(t.Name))
-                         .Select(t => new
-                         {
-                             Player = p,
-                             SkillId = t.Id,
-                             SkillName = t.Name,
-                             Line = skillsDict[t.Name].Line
-                         }));
-
-            var lineGroups = flatten.GroupBy(x => x.Line);
-
-            return lineGroups.Select(g =>
-            {
-                var skills = g.GroupBy(x => x.SkillId)
-                              .Select(grp => new SkillModel
-                              {
-                                  Id = grp.Key,
-                                  Name = grp.First().SkillName
-                              })
-                              .ToList();
-
-                int playersUsing = g.Select(x => x.Player).Distinct().Count();
-
-                return new SkillLinesModel
+            skillsDict = await skillsRepository
+                .GetList(x => x.SkillLine.LineType.Name == "Class")
+                .Include(x => x.SkillLine)
+                .ToDictionaryAsync(k => 
+                k.AbilityId ?? 0, 
+                v => new SkillInfo(v.SkillName, v.SkillLine.Name), 
+                token);
+            var reports = await dataService.GetAllReportsAndFights(zoneId, difficulty);
+            var zones = await encounterRepository
+                .GetList(x => x.Zone.Type.Name == "Trial")
+                .Select(x => new ZoneModel()
                 {
-                    LineName = g.Key,
-                    UniqueSkillsCount = skills.Count,
-                    PlayersUsingThisLine = playersUsing,
-                    Skills = skills
-                };
-            }).ToList();
-        }
-
-        public async Task<List<SkillLineReportModel>> GetSkillLinesAsync(int zoneId)
-        {
-            var reports = await dataService.GetAllReportsAndFights(zoneId);
-            var zones = await dataService.GetAllZonesAndEncountersAsync();
+                    Id = x.Zone.Id,
+                    Name = x.Zone.Name,
+                    Encounters = x.Zone.Encounters
+                        .Where(e => e.Type.Name == "Trial")
+                        .Select(e => new EncounterModel
+                        {
+                            Id = e.Id,
+                            Name = e.Name,
+                            ScoreCense = e.ScoreCense ?? 0
+                        }).ToList()
+                })
+                .ToListAsync(cancellationToken: token);
 
             var filtered = reports
                 .Join(zones,
@@ -70,12 +71,21 @@ namespace SubclassesTrackerExtension.EsologsServices
                             LogId = r.Code,
                             ZoneId = z.Id,
                             ZoneName = z.Name,
-                            Fights = r.Fights
-                            .Where(f => z.Encounters.Select(e => e.Name)
-                                    .Contains(f.Name) &&
-                                    f.TrialScore.HasValue)
-                            .ToList()
-                        })
+                            Fights = r.Fights.Where(f =>
+                            {
+                                // Filter fights based on trial score and encounter
+                                if (!f.TrialScore.HasValue)
+                                    return false;
+
+                                // Check if the encounter exists in the zone
+                                var enc = z.Encounters.FirstOrDefault(e => e.Id == f.EncounterId);
+                                if (enc is null)
+                                    return false;
+
+                                // Check if the fight's trial score meets the criteria
+                                return !useScoreCense || f.TrialScore.Value >= enc.ScoreCense;
+                            }).ToList()
+        })
                 .Where(x => x.Fights.Count != 0)
                 .ToList();
 
@@ -90,7 +100,7 @@ namespace SubclassesTrackerExtension.EsologsServices
             var rows = (
                 from rep in filtered
                 from fight in rep.Fights.Where(f => f.TrialScore.HasValue)
-                let pd = playersDetail.Single(p => p.LogId == rep.LogId)
+                let pd = playersDetail.First(p => p.LogId == rep.LogId)
 
                 from tuple in new[] { ("DPS", pd.Dps), ("Healer", pd.Healers), ("Tank", pd.Tanks) }
                 let role = tuple.Item1
@@ -115,15 +125,15 @@ namespace SubclassesTrackerExtension.EsologsServices
                 })
                 .GroupBy(x => x.Key)
                 .Select(g => g.OrderByDescending(x => x.FightScore).First())
-                .Select(x => new PlayerRow(x.playerId, x.logId, new[] { x.fightId }, x.Role,
+                .Select(x => new PlayerRow(x.playerId, x.logId, [x.fightId], x.Role,
                                            x.TrialId, x.TrialName, x.Talents))
                 .ToList();
 
-            var needBuffs = 
+            var needBuffs =
                 rows.Where(r =>
                        r.Talents
-                        .Where(t => skillsDict.ContainsKey(t.Name))
-                        .Select(t => skillsDict[t.Name].Line)
+                        .Where(t => skillsDict.ContainsKey(t.Id))
+                        .Select(t => skillsDict[t.Id].SkillLine)
                         .Distinct()
                         .Count() < 3)
                     .ToList();
@@ -132,7 +142,7 @@ namespace SubclassesTrackerExtension.EsologsServices
                 rows.AddRange(await GetBuffsAsync(needBuffs));
 
             List<SkillLineReportModel> result =
-                rows.Where(x => x.TrialId == zoneId)
+                [.. rows.Where(x => x.TrialId == zoneId)
                     .Select(grp => new SkillLineReportModel
                     {
                         TrialId = grp.TrialId,
@@ -140,7 +150,68 @@ namespace SubclassesTrackerExtension.EsologsServices
                         DdLinesModels = BuildLines(rows.Where(p => p.Role == "DPS"), skillsDict),
                         HealersLinesModels = BuildLines(rows.Where(p => p.Role == "Healer"), skillsDict),
                         TanksLinesModels = BuildLines(rows.Where(p => p.Role == "Tank"), skillsDict)
-                    }).ToList();
+                    })];
+
+            return result;
+        }
+
+        private static List<SkillLinesModel> BuildLines(
+           IEnumerable<PlayerRow> players,
+           IReadOnlyDictionary<int, SkillInfo> skillsDict)
+        {
+            // Get all skill lines
+            var allLines = skillsDict.Values
+                             .Select(s => s.SkillLine)
+                             .Distinct()
+                             .ToList();
+
+            // Joining with the players' talents
+            var flatten = players
+               .SelectMany(p => p.Talents
+                                 .Where(t => skillsDict.ContainsKey(t.Id))
+                                 .Select(t => new
+                                 {
+                                     Player = p,
+                                     SkillId = t.Id,
+                                     Line = skillsDict[t.Id].SkillLine,
+                                     SkillName = t.Name
+                                 }))
+               .ToList();
+
+            // Grouping by all finded skills
+            var realGroups = flatten
+               .GroupBy(x => x.Line)
+               .ToDictionary(g => g.Key, g => g.ToList());
+
+            // Build the result
+            var result = new List<SkillLinesModel>(allLines.Count);
+            foreach (var line in allLines)
+            {
+                realGroups.TryGetValue(line, out var items);    // null -> no players used this line
+
+                var skills = items?
+                    .GroupBy(it => it.SkillId)
+                    .Select(grp => new SkillModel
+                    {
+                        Id = grp.Key,
+                        Name = grp.First().SkillName
+                    })
+                    .ToList()
+                    ?? [];
+
+                var playersUsing = items?
+                    .Select(it => it.Player)
+                    .Distinct()
+                    .Count() ?? 0;
+
+                result.Add(new SkillLinesModel
+                {
+                    LineName = line,
+                    UniqueSkillsCount = skills.Count,
+                    PlayersUsingThisLine = playersUsing,
+                    Skills = skills
+                });
+            }
 
             return result;
         }
@@ -153,7 +224,7 @@ namespace SubclassesTrackerExtension.EsologsServices
                                 row.LogId, row.PlayerId, row.FightIds);
 
                 var extra = buffs
-                    .Where(b => skillsDict.ContainsKey(b.Name))
+                    .Where(b => skillsDict.ContainsKey(b.Id))
                     .Where(b => !row.Talents.Any(t => t.Id == b.Id))
                     .Select(b => new Talent(b.Id, b.Name));
 

@@ -14,5 +14,10 @@
         /// Name of the encounter.
         /// </summary>
         public string Name { get; set; } = "";
+
+        /// <summary>
+        /// The "good" score.
+        /// </summary>
+        public int ScoreCense { get; set; }
     }
 }

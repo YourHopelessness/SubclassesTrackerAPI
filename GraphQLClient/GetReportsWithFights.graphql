@@ -15,9 +15,10 @@ query GetReportsWithFights(
             name
         },
         code
-        fights(difficulty: $difficulty, killType: $killType) {
+        fights(difficulty: $difficulty, killType: $killType, translate: true) {
           id
           name
+          encounterID
           trialScore
         }
       }

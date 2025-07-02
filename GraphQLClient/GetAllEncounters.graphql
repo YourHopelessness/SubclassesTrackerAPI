@@ -1,12 +1,16 @@
 ﻿query {
-	worldData {
-		zones {
-			id,
-            name,
-            encounters {
-				id,
-                name
-			}
-		}
-	}
+    worldData {
+       zones {
+          id
+          name
+            difficulties {
+               id
+               name
+            }
+      encounters {
+        id
+        name
+       }
+    }
+  }
 }

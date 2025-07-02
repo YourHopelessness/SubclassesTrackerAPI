@@ -21,8 +21,19 @@
     <PackageReference Include="OpenIddict" Version="6.4.0" />
     <PackageReference Include="OpenIddict.AspNetCore" Version="6.4.0" />
     <PackageReference Include="OpenIddict.Client" Version="6.4.0" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.11" />
     <PackageReference Include="StrawberryShake.Transport.Http" Version="15.1.7" />
     <PackageReference Include="StrawberryShake.Transport.WebSockets" Version="15.1.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SubclassesTracker.Database\SubclassesTracker.Database.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Lines\skillTree.db">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

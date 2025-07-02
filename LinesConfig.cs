@@ -26,7 +26,7 @@
         /// <summary> The endpoint for obtaining access tokens. </summary>
         public string TokenEndpoint { get; set; } = string.Empty;
 
-        /// <summary> The path to the Excel file containing skill lines data. </summary>
-        public string LinesSkillExcel { get; set; } = string.Empty;
+        /// <summary> The path to the Db file containing skill lines data. </summary>
+        public string SkillLinesDb { get; set; } = string.Empty;
     }
 }

@@ -1,36 +1,10 @@
 ﻿using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Spreadsheet;
 using SubclassesTrackerExtension.Models;
 
 namespace SubclassesTrackerExtension.ExcelServices
 {
     public class ExcelParserService
     {
-        /// <summary>
-        /// Loads skill lines from an Excel file and returns a dictionary mapping skill line names to their respective skill IDs.
-        /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
-        public static Dictionary<string, SkillInfo> LoadSkills(string path)
-        {
-            using var wb = new XLWorkbook(path);
-            var ws = wb.Worksheets.First();
-
-            var dict = new Dictionary<string, SkillInfo>();
-
-            // headers
-            foreach (var row in ws.RowsUsed().Skip(1))
-            {
-                dict[row.Cell(2).GetString().Trim()] = new SkillInfo
-                {
-                    Name = row.Cell(2).GetString().Trim(),
-                    Line = row.Cell(3).GetString().Trim()
-                };
-            }
-            return dict;
-        }
-        public sealed record SkillInfo { public string Name = ""; public string Line = ""; }
-
         public static void ExportToExcel(
             IEnumerable<SkillLineReportModel> data,
             string path)

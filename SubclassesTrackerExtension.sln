@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197 d17.13
+VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubclassesTrackerExtension", "SubclassesTrackerExtension.csproj", "{537F1E69-56CE-4D49-9CAC-D48E4233DD47}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubclassesTracker.Database", "..\SubclassesTracker.Database\SubclassesTracker.Database.csproj", "{ABCD2A6E-A210-4F6D-8B71-18E681680D85}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{537F1E69-56CE-4D49-9CAC-D48E4233DD47}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{537F1E69-56CE-4D49-9CAC-D48E4233DD47}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{537F1E69-56CE-4D49-9CAC-D48E4233DD47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABCD2A6E-A210-4F6D-8B71-18E681680D85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABCD2A6E-A210-4F6D-8B71-18E681680D85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABCD2A6E-A210-4F6D-8B71-18E681680D85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABCD2A6E-A210-4F6D-8B71-18E681680D85}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
