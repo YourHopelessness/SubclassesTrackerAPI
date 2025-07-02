@@ -41,6 +41,8 @@ nested under the `LinesConfig` section:
   }
 }
 ```
+You can create your own OAuth client [https://www.esologs.com/api/clients](here) 
+![image](https://github.com/user-attachments/assets/5c596b6c-2d00-42c2-96cf-57a0d1725d5b)
 
 ## Usage
 
