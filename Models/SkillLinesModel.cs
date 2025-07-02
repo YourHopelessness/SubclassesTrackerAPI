@@ -31,7 +31,19 @@
     /// </summary>
     public sealed class SkillModel
     {
+        /// <summary>
+        /// Unique identifier for the skill.
+        /// </summary>
         public int Id { get; set; }
+
+        /// <summary>
+        /// Name of the skill.
+        /// </summary>
         public string Name { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Type of the skill, indicating its category (like Active or Passive).
+        /// </summary>
+        public string Type { get; set; } = string.Empty;
     }
 }

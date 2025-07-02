@@ -8,9 +8,13 @@
 
   <ItemGroup>
     <Compile Remove="EsologsServices\Saves\**" />
+    <Compile Remove="SubclassesTracker.Database\**" />
     <Content Remove="EsologsServices\Saves\**" />
+    <Content Remove="SubclassesTracker.Database\**" />
     <EmbeddedResource Remove="EsologsServices\Saves\**" />
+    <EmbeddedResource Remove="SubclassesTracker.Database\**" />
     <None Remove="EsologsServices\Saves\**" />
+    <None Remove="SubclassesTracker.Database\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SubclassesTracker.Database\SubclassesTracker.Database.csproj" />
+    <ProjectReference Include="SubclassesTracker.Database\SubclassesTracker.Database.csproj" />
   </ItemGroup>
 
   <ItemGroup>

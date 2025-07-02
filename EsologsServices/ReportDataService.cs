@@ -29,7 +29,7 @@ namespace SubclassesTrackerExtension.EsologsServices
     {
         private sealed record PlayerKey(string Name, string TrialName, string Display, string Spec);
         private Dictionary<int, SkillInfo> skillsDict = [];
-        private sealed record SkillInfo(string SkillName, string SkillLine);
+        private sealed record SkillInfo(string SkillName, string SkillLine, string SkillType);
        
         public async Task<List<SkillLineReportModel>> GetSkillLinesAsync(
             int zoneId,
@@ -42,7 +42,7 @@ namespace SubclassesTrackerExtension.EsologsServices
                 .Include(x => x.SkillLine)
                 .ToDictionaryAsync(k => 
                 k.AbilityId ?? 0, 
-                v => new SkillInfo(v.SkillName, v.SkillLine.Name), 
+                v => new SkillInfo(v.SkillName, v.SkillLine.Name, v.SkillType), 
                 token);
             var reports = await dataService.GetAllReportsAndFights(zoneId, difficulty);
             var zones = await encounterRepository
@@ -194,7 +194,8 @@ namespace SubclassesTrackerExtension.EsologsServices
                     .Select(grp => new SkillModel
                     {
                         Id = grp.Key,
-                        Name = grp.First().SkillName
+                        Name = grp.First().SkillName,
+                        Type = skillsDict[grp.Key].SkillType
                     })
                     .ToList()
                     ?? [];
