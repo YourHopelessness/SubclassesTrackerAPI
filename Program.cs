@@ -1,12 +1,15 @@
 using Microsoft.EntityFrameworkCore;
+using SQLitePCL;
 using SubclassesTracker.Database.Context;
 using SubclassesTracker.Database.Entity;
 using SubclassesTracker.Database.Repository;
 using SubclassesTrackerExtension;
+using SubclassesTrackerExtension.BackgroundQueue;
+using SubclassesTrackerExtension.BackgroundQueue.HostedService;
+using SubclassesTrackerExtension.BackgroundQueue.Jobs;
+using SubclassesTrackerExtension.BackgroundQueue.JobStatuses;
 using SubclassesTrackerExtension.EsologsServices;
 using SubclassesTrackerExtension.Extensions;
-using SQLitePCL;
-using Microsoft.Extensions.Configuration;
 
 Batteries.Init();
 
@@ -21,15 +24,20 @@ builder.Services.AddScoped<IBaseRepository<Encounter>, BaseRepository<Encounter>
 builder.Services.AddHttpClient();
 builder.Services.Configure<LinesConfig>(builder.Configuration.GetSection(nameof(LinesConfig)));
 builder.Services.AddDbContext<EsoContext>(options =>
-    options.UseSqlite("Data Source=" + 
+    options.UseSqlite("Data Source=" +
         builder.Configuration.GetSection("LinesConfig:SkillLinesDb").Value));
-builder.Services.AddHostedService<BackgroundDataCollector>();
+
+// Register the background queue and hosted service
+builder.Services.AddHostedService<QueuedHostedService>();
+builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+builder.Services.AddSingleton<IJobMonitor, JobMonitor>();
+// Register the job
+builder.Services.AddScoped<JobDataCollection>();
+
 builder.Services.AddGraphQLClient();
 builder.Services.AddControllers();
 
 var app = builder.Build();
-
-Console.WriteLine(Path.GetFullPath(builder.Configuration["LinesConfig:SkillLinesDb"]));
 
 app.MapControllers();
 

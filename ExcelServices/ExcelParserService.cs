@@ -5,13 +5,10 @@ namespace SubclassesTrackerExtension.ExcelServices
 {
     public class ExcelParserService
     {
-        public static void ExportToExcel(
-            IEnumerable<SkillLineReportModel> data,
-            string path)
+        public static byte[] ExportToExcel(
+            IEnumerable<SkillLineReportModel> data)
         {
-            XLWorkbook wb = File.Exists(path)
-                   ? new XLWorkbook(path)
-                   : new XLWorkbook();
+            XLWorkbook wb = new();
 
             foreach (var trial in data)
             {
@@ -51,7 +48,10 @@ namespace SubclassesTrackerExtension.ExcelServices
                 ws.SheetView.FreezeRows(1);
             }
 
-            wb.SaveAs(path);
+            using var ms = new MemoryStream();
+            wb.SaveAs(ms);
+
+            return ms.ToArray();
         }
     }
 }
