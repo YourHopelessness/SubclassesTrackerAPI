@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SubclassesTrackerExtension.BackgroundQueue;
-using SubclassesTrackerExtension.BackgroundQueue.Jobs;
-using SubclassesTrackerExtension.BackgroundQueue.JobStatuses;
-using SubclassesTrackerExtension.Models;
-using SubclassesTrackerExtension.Utils;
+using SubclassesTracker.Api.BackgroundQueue;
+using SubclassesTracker.Api.BackgroundQueue.Jobs;
+using SubclassesTracker.Api.BackgroundQueue.JobStatuses;
+using SubclassesTracker.Api.Models.Responses.Api;
+using SubclassesTracker.Api.Utils;
 
-namespace SubclassesTrackerExtension.Controllers
+namespace SubclassesTracker.Api.Controllers
 {
     [Route("api/[controller]")]
     public class JobController(
@@ -40,9 +40,9 @@ namespace SubclassesTrackerExtension.Controllers
             return jobinfo.State switch
             {
                 JobStatusEnum.Succeeded or JobStatusEnum.SucceededWithErrors 
-                    => jobinfo.ResultObj is DataCollectionResultModel ? 
+                    => jobinfo.ResultObj is DataCollectionResultApiResponse ? 
                        File(ZipHelper.GenerateDataCollectionZipArchive(
-                                        (DataCollectionResultModel)jobinfo.ResultObj),
+                                        (DataCollectionResultApiResponse)jobinfo.ResultObj),
                             "application/zip",
                             $"stats_{DateTime.UtcNow}.zip")
                        : Ok(jobinfo.ResultObj),
@@ -78,7 +78,7 @@ namespace SubclassesTrackerExtension.Controllers
             switch (jobType)
             {
                 case JobsEnum.CollectDataForClassLines:
-                    queue.Enqueue<JobDataCollection, DataCollectionResultModel>(guid);
+                    queue.Enqueue<JobDataCollection, DataCollectionResultApiResponse>(guid);
                     break;
                 default:
                     return BadRequest("Invalid job type.");

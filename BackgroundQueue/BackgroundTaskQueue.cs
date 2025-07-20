@@ -1,10 +1,10 @@
 ﻿using DocumentFormat.OpenXml.InkML;
-using SubclassesTrackerExtension.BackgroundQueue.Jobs;
-using SubclassesTrackerExtension.BackgroundQueue.JobStatuses;
+using SubclassesTracker.Api.BackgroundQueue.Jobs;
+using SubclassesTracker.Api.BackgroundQueue.JobStatuses;
 using System.Threading;
 using System.Threading.Channels;
 
-namespace SubclassesTrackerExtension.BackgroundQueue
+namespace SubclassesTracker.Api.BackgroundQueue
 {
     /// <summary>
     /// Task queue for background tasks

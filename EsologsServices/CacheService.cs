@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace SubclassesTrackerExtension.EsologsServices
+namespace SubclassesTracker.Api.EsologsServices
 {
     public class CacheService
     {

@@ -1,6 +1,6 @@
-﻿using SubclassesTrackerExtension.BackgroundQueue.Jobs;
+﻿using SubclassesTracker.Api.BackgroundQueue.Jobs;
 
-namespace SubclassesTrackerExtension.BackgroundQueue
+namespace SubclassesTracker.Api.BackgroundQueue
 {
     /// <summary>
     /// Delegate for Job

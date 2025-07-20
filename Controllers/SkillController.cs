@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SubclassesTrackerExtension.EsologsServices;
+using SubclassesTracker.Api.EsologsServices;
+using SubclassesTracker.Api.EsologsServices.Reports;
 
-namespace SubclassesTrackerExtension.Controllers
+namespace SubclassesTracker.Api.Controllers
 {
     [Route("api/[controller]")]
     public class SkillController(
-        IGetDataService getDataService) : ControllerBase
+        IGetDataService getDataService,
+        IReportDataService reportDataService) : ControllerBase
     {
         /// <summary>
         /// Retrieves fights for a specific log ID.
@@ -31,7 +33,7 @@ namespace SubclassesTrackerExtension.Controllers
             {
                 return NotFound("No fights found for the provided log ID.");
             }
-            var players = await getDataService.GetPlayersAsync(logId, fightsIds);
+            var players = await getDataService.GetPlayersAsync(logId, [.. fightsIds.Select(x => x.Id)]);
             return Ok(players);
         }
 
@@ -49,9 +51,27 @@ namespace SubclassesTrackerExtension.Controllers
             {
                 return NotFound("No fights found for the provided log ID.");
             }
-            var buffs = await getDataService.GetPlayerBuffsAsync(logId, playerId, fightsIds);
+            var buffs = await getDataService.GetPlayerBuffsAsync(logId, playerId, [.. fightsIds.Select(x => x.Id)]);
             return Ok(buffs);
         }
+
+        /// <summary>
+        /// Get all players skill lines by specified logId
+        /// </summary>
+        /// <param name="logId">Specified log</param>
+        /// <param name="fightId">Fight id</param>
+        /// <param name="bossId">Boss id</param>
+        /// <returns>List of all players lines</returns>
+        [HttpGet("getPlayersLines")]
+        public async Task<IActionResult> GetPlayersLinesAsync(
+            [FromQuery] string logId,
+            [FromQuery] string? fightId = null,
+            [FromQuery] int? bossId = null,
+            [FromQuery] int? wipes = null)
+        {
+            return Ok(await reportDataService.GetSkillLinesByReportAsync(logId, fightId, bossId, wipes));
+        }
+
 
         /// <summary>
         /// Retrieves all reports and their associated fights for a specific zone and difficulty.

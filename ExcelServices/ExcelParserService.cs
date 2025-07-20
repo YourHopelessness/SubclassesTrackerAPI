@@ -1,12 +1,13 @@
 ﻿using ClosedXML.Excel;
-using SubclassesTrackerExtension.Models;
+using SubclassesTracker.Api.Models.Responses.Api;
+using SubclassesTracker.Api.Models.Responses.Esologs;
 
-namespace SubclassesTrackerExtension.ExcelServices
+namespace SubclassesTracker.Api.ExcelServices
 {
     public class ExcelParserService
     {
         public static byte[] ExportToExcel(
-            IEnumerable<SkillLineReportModel> data)
+            IEnumerable<SkillLineReportEsologsResponse> data)
         {
             XLWorkbook wb = new();
 
@@ -28,7 +29,7 @@ namespace SubclassesTrackerExtension.ExcelServices
                 ws.Range("A1:D1").Style.Font.Bold = true;
 
                 int row = 2;
-                void Dump(IEnumerable<SkillLinesModel> src, string role)
+                void Dump(IEnumerable<SkillLinesApiResponse> src, string role)
                 {
                     foreach (var l in src)
                     {

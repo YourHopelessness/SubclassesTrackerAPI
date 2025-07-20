@@ -1,7 +1,8 @@
-﻿namespace SubclassesTrackerExtension.BackgroundQueue.HostedService
+﻿namespace SubclassesTracker.Api.BackgroundQueue.HostedService
 {
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
+    using SubclassesTracker.Api.BackgroundQueue;
 
     public sealed class QueuedHostedService(
             IBackgroundTaskQueue queue,

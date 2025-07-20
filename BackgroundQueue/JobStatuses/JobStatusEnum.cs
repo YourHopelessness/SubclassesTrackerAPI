@@ -1,4 +1,4 @@
-﻿namespace SubclassesTrackerExtension.BackgroundQueue.JobStatuses
+﻿namespace SubclassesTracker.Api.BackgroundQueue.JobStatuses
 {
     /// <summary>
     /// Enumeration representing the possible statuses of a job in the background queue.

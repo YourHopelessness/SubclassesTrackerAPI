@@ -1,14 +1,14 @@
-﻿using SubclassesTrackerExtension.Models;
+﻿using SubclassesTracker.Api.Models.Responses.Api;
 using System.IO.Compression;
 using System.IO.Packaging;
 
-namespace SubclassesTrackerExtension.Utils
+namespace SubclassesTracker.Api.Utils
 {
     public class ZipHelper
     {
         private const long BUFFER_SIZE = 4096;
 
-        public static byte[] GenerateDataCollectionZipArchive(DataCollectionResultModel dataCollectionResult)
+        public static byte[] GenerateDataCollectionZipArchive(DataCollectionResultApiResponse dataCollectionResult)
         {
             byte[] all_stats = dataCollectionResult.LinesStats;
             byte[] stats_with_score = dataCollectionResult.LinesStatsWithScore;

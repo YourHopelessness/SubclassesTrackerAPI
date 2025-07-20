@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "rollup": "^4.44.2",
+    "url": "^0.11.4",
+    "vite": "^7.0.2",
+    "vite-plugin-chrome-extension": "^0.0.7"
+  },
+  "devDependencies": {
+    "path": "^0.12.7"
+  }
+}

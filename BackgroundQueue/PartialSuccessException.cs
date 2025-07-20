@@ -1,4 +1,4 @@
-﻿namespace SubclassesTrackerExtension.BackgroundQueue
+﻿namespace SubclassesTracker.Api.BackgroundQueue
 {
     public class PartialSuccessException<TResult>(TResult currentResult, string errors) : Exception(errors)
     {

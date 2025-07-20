@@ -1,6 +1,4 @@
-﻿using SubclassesTrackerExtension.BackgroundQueue.JobStatuses;
-
-namespace SubclassesTrackerExtension.BackgroundQueue.Jobs
+﻿namespace SubclassesTracker.Api.BackgroundQueue.Jobs
 {
     /// <summary>
     /// Interface for a job that can be executed asynchronously and returns a result.

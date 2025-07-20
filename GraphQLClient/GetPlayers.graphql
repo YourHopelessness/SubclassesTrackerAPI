@@ -1,7 +1,0 @@
-query GetPlayers($code: String!, $fightsIds: [Int!]!) {
-  reportData {
-    report(code: $code) {
-      table(fightIDs: $fightsIds, dataType: Summary, translate: true) 
-    }
-  }
-}

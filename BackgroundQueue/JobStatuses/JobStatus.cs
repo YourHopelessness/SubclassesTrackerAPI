@@ -1,4 +1,4 @@
-﻿namespace SubclassesTrackerExtension.BackgroundQueue.JobStatuses
+﻿namespace SubclassesTracker.Api.BackgroundQueue.JobStatuses
 {
     /// <summary>
     /// Interface representing the information about a job in the background queue.

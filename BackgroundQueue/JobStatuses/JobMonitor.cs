@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace SubclassesTrackerExtension.BackgroundQueue.JobStatuses
+namespace SubclassesTracker.Api.BackgroundQueue.JobStatuses
 {
     /// <summary>
     /// Interface for monitoring job statuses.

@@ -1,0 +1,13 @@
+query GetFights($Code: String!) {
+  reportData {
+    report(code: $Code) {
+      fights {
+        id
+        name
+        encounterID
+        trialScore
+        kill
+      }
+    }
+  }
+}

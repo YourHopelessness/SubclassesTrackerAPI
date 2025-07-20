@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ESO Logs Helper</title>
+    <script type="module" src="popup.ts"></script>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body class="p-4 min-w-[260px] font-sans">
+    <h1 class="text-lg font-bold mb-2">ESO Logs Helper</h1>
+    <div id="state"></div>
+    <template id="askId">
+      <label class="block mb-2 text-sm">Enter ESO Logs Client ID</label>
+      <input id="clientId" class="border px-2 py-1 w-full mb-2" />
+      <button id="save" class="border rounded px-3 py-1">Save</button>
+    </template>
+    <template id="loggedIn">
+      <p class="text-green-700">Tokens stored ✔</p>
+      <button id="reAuth" class="border rounded px-3 py-1 mt-2">Re-authenticate</button>
+    </template>
+  </body>
+</html>

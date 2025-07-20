@@ -1,16 +1,10 @@
-﻿namespace SubclassesTrackerExtension
+﻿namespace SubclassesTracker.Api
 {
     /// <summary>
     /// Configuration class for service settings.
     /// </summary>
     public class LinesConfig
     {
-        /// <summary> The client ID for the service. </summary>
-        public string ClientId { get; set; } = string.Empty;
-
-        /// <summary> The tokenFile for the service. </summary>
-        public string TokenFilePath { get; set; } = string.Empty;
-
         /// <summary> The time slice for the trial start time. </summary>
         public long TrialStartTimeSlice { get; set; }
 

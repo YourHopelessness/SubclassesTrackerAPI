@@ -1,18 +1,22 @@
 ﻿using GraphQLClientNS;
 using Microsoft.Extensions.Options;
-using SubclassesTrackerExtension.Extensions;
-using SubclassesTrackerExtension.Models;
+using SubclassesTracker.Api.Extensions;
+using SubclassesTracker.Api.GraphQLClient;
+using SubclassesTracker.Api.Models.Dto;
+using SubclassesTracker.Api.Models.Responses.Api;
+using SubclassesTracker.Api.Models.Responses.Esologs;
+using static SubclassesTracker.Api.GraphQLClient.GraphQLQueries;
 
-namespace SubclassesTrackerExtension.EsologsServices
+namespace SubclassesTracker.Api.EsologsServices
 {
     public interface IGetDataService
     {
         /// <summary>
-        /// Retrieves the list of fight IDs for a given log ID.
+        /// Retrieves the list of fights for a given log ID.
         /// </summary>
         /// <param name="logId"></param>
         /// <returns></returns>
-        Task<IReadOnlyList<int>> GetFigthsAsync(string logId);
+        Task<List<FightEsologsResponse>> GetFigthsAsync(string logId);
 
         /// <summary>
         /// Retrieves the list of players for a given log ID and fight IDs.
@@ -20,7 +24,7 @@ namespace SubclassesTrackerExtension.EsologsServices
         /// <param name="logId"></param>
         /// <param name="fightsIds"></param>
         /// <returns></returns>
-        Task<PlayerListModel> GetPlayersAsync(string logId, IReadOnlyList<int> fightsIds);
+        Task<PlayerListResponse> GetPlayersAsync(string logId, List<int> fightsIds);
 
         /// <summary>
         /// Retrieves the buffs for a specific player in a given log and fight IDs.
@@ -29,7 +33,7 @@ namespace SubclassesTrackerExtension.EsologsServices
         /// <param name="playerId"></param>
         /// <param name="fightId"></param>
         /// <returns></returns>
-        Task<IEnumerable<BuffModel>> GetPlayerBuffsAsync(string logId, int playerId, IReadOnlyList<int> fightId);
+        Task<List<BuffEsologsResponse>> GetPlayerBuffsAsync(string logId, int playerId, List<int> fightId);
 
         /// <summary>
         /// Retrieves all reports and their associated fights for a specific zone and difficulty.
@@ -37,66 +41,53 @@ namespace SubclassesTrackerExtension.EsologsServices
         /// <param name="zoneId"></param>
         /// <param name="difficulty"></param>
         /// <returns></returns>
-        Task<List<ReportModel>> GetAllReportsAndFights(int zoneId = 1, int difficulty = 122);
+        Task<List<ReportEsologsResponse>> GetAllReportsAndFights(int zoneId = 1, int difficulty = 122);
 
         /// <summary>
         /// Retrieves all zones and their encounters from the ESO Logs API.
         /// </summary>
         /// <returns></returns>
-        Task<List<ZoneModel>> GetAllZonesAndEncountersAsync();
+        Task<List<ZoneApiResponse>> GetAllZonesAndEncountersAsync();
     }
     public class GetDataService(
-        GraphQLClient graphQLClient,
         IOptions<LinesConfig> options,
-        TokenStorage tokenStorage,
         IHttpClientFactory httpClientFactory,
         ILogger<GetDataService> logger) : IGetDataService
     {
-        public async Task<IReadOnlyList<int>> GetFigthsAsync(string logId)
-        {
-            var fights = await graphQLClient.GetFights.ExecuteAsync(logId);
+        private readonly QraphQlExecutor qlExecutor = 
+            new(options.Value.EsoLogsApiUrl, logger, httpClientFactory);
 
-            return fights?.Data?.ReportData?.Report?.Fights?
-                    .Where(f => f != null)
-                    .Select(f => f.Id)
-                    .ToList() ?? [];
+        public async Task<List<FightEsologsResponse>> GetFigthsAsync(string logId)
+        {
+            var fights = await qlExecutor.QueryAsync<List<FightEsologsResponse>, GetFightsVars>(
+                GraphQlQueryEnum.GetFights,
+                new GetFightsVars(logId));
+
+            return fights;
         }
 
-        public async Task<PlayerListModel> GetPlayersAsync(string logId, IReadOnlyList<int> fightsIds)
+        public async Task<PlayerListResponse> GetPlayersAsync(string logId, List<int> fightsIds)
         {
-            var players = await graphQLClient.GetPlayers.ExecuteQueryWithFallbackAsync<PlayerListModel>(
-                await tokenStorage.GetToken(),
-                "GraphQLClient/GetPlayers.graphql",
-                new { code = logId, fightsIds = fightsIds.ToArray() },
-                "data.reportData.report.table.data.playerDetails",
-                $"Saves/GetPlayers/GetPlayers{logId}_{string.Join(',', fightsIds)}.json",
-                options.Value.EsoLogsApiUrl,
-                logger,
-                httpClientFactory);
+            var players = await qlExecutor.QueryAsync<PlayerListResponse, GetPlayersVars>(
+                GraphQlQueryEnum.GetPlayers,
+                new GetPlayersVars(logId, [.. fightsIds]));
 
             return players;
         }
 
-        public async Task<IEnumerable<BuffModel>> GetPlayerBuffsAsync(string logId, int playerId, IReadOnlyList<int> fightId)
+        public async Task<List<BuffEsologsResponse>> GetPlayerBuffsAsync(string logId, int playerId, List<int> fightId)
         {
-            var buffs = await graphQLClient.GetBuffs.ExecuteQueryWithFallbackAsync<List<BuffModel>>(
-                await tokenStorage.GetToken(),
-                "GraphQLClient/GetBuffs.graphql",
-                new { code = logId, fightIds = fightId, playerId },
-                "data.reportData.report.table.data.auras",
-                $"Saves/GetBuffs/GetBuffs_{logId}_{playerId}.json",
-                options.Value.EsoLogsApiUrl,
-                logger,
-                httpClientFactory
-            );
+            var buffs = await qlExecutor.QueryAsync<List<BuffEsologsResponse>, GetBuffsVars>(
+                GraphQlQueryEnum.GetBuffs,
+                new GetBuffsVars(logId, playerId, [.. fightId]));
 
             return buffs;
         }
 
-        public async Task<List<ReportModel>> GetAllReportsAndFights(
+        public async Task<List<ReportEsologsResponse>> GetAllReportsAndFights(
             int zoneId = 1, int difficulty = 122)
         {
-            var resultList = new List<ReportModel>();
+            var resultList = new List<ReportEsologsResponse>();
 
             var startTime = options.Value.TrialStartTimeSlice;
             var currentTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -111,31 +102,21 @@ namespace SubclassesTrackerExtension.EsologsServices
                 {
                     if (page > 24)
                     {
-                        return (new List<ReportModel>(), false);
+                        return (new List<ReportEsologsResponse>(), false);
                     }
 
-                    var variables = new
-                    {
-                        zoneID = zoneId,
-                        startTime = (long)sliceStart,
-                        endTime = (long)sliceEnd,
+                    var variables = new GetReportsWithFightsVars(
+                        zoneId,
+                        (long)sliceStart,
+                        (long)sliceEnd,
                         page,
-                        limit = 100,
-                        difficulty,
-                        killType = KillType.Kills
-                    };
+                        KillType.Kills,
+                        100,
+                        difficulty);
 
-                    var result = await graphQLClient.GetReportsWithFights
-                        .ExecuteQueryWithFallbackAsync<ReportRequestModel>(
-                            await tokenStorage.GetToken(),
-                            "GraphQLClient/GetReportsWithFights.graphql",
-                            variables,
-                            "data.reportData.reports",
-                            $"Saves/GetReportsWithFights/GetReportsWithFights{variables.zoneID}_{variables.page}_{variables.limit}_{sliceStart}_{sliceEnd}.json",
-                            options.Value.EsoLogsApiUrl,
-                            logger,
-                            httpClientFactory
-                        );
+                    var result = await qlExecutor.QueryAsync<ReportRequestEsologsResponse, GetReportsWithFightsVars>(
+                            GraphQlQueryEnum.GetReportsWithFights,
+                            variables);
 
                     return (result.Data, result.HasMorePages);
                 },
@@ -145,18 +126,11 @@ namespace SubclassesTrackerExtension.EsologsServices
             return [.. resultList.DistinctBy(x => x.Code)];
         }
 
-        public async Task<List<ZoneModel>> GetAllZonesAndEncountersAsync()
+        public async Task<List<ZoneApiResponse>> GetAllZonesAndEncountersAsync()
         {
-            var zones = await graphQLClient.GetBuffs.ExecuteQueryWithFallbackAsync<List<ZoneModel>>(
-                await tokenStorage.GetToken(),
-                "GraphQLClient/GetAllEncounters.graphql",
-                new { },
-                "data.worldData.zones",
-                "Saves/GetAllEncounters/GetAllEncounters.json",
-                options.Value.EsoLogsApiUrl,
-                logger,
-                httpClientFactory
-            );
+            var zones = await qlExecutor.QueryAsync<List<ZoneApiResponse>, GetAllEncountersVars>(
+                GraphQlQueryEnum.GetAllEncounters,
+                new GetAllEncountersVars());
 
             return zones;
         }
