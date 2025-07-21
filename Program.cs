@@ -22,15 +22,32 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<LinesConfig>(builder.Configuration.GetSection(nameof(LinesConfig)));
 
 // Add CORS policy for the Chrome extension
-const string CorsPolicy = "ExtensionPolicy";
+const string ExtensionCorsPolicy = "ExtensionPolicy";
+const string EsologsCorsPolicy = "EsologsCorsPolicy";
 builder.Services.AddCors(opts =>
 {
-    opts.AddPolicy(CorsPolicy, b => b
+    opts.AddPolicy(ExtensionCorsPolicy, b => b
         .WithOrigins("chrome-extension://mpldcmnhbilholjaopjhcjfhcimgehjf")
         .WithMethods("GET", "POST")
         .AllowAnyHeader()
         .AllowCredentials()
     );
+});
+builder.Services.AddCors(opts =>
+{
+    opts.AddPolicy("EsologsCorsPolicy", b => b
+        .SetIsOriginAllowed(origin =>
+        {
+            if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                return false;
+
+            return uri.Scheme == Uri.UriSchemeHttps &&
+                   (uri.Host.Equals("esologs.com", StringComparison.OrdinalIgnoreCase) ||
+                    uri.Host.EndsWith(".esologs.com", StringComparison.OrdinalIgnoreCase));
+        })
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials());
 });
 
 // Register services
@@ -68,7 +85,8 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-app.UseCors(CorsPolicy);
+app.UseCors(ExtensionCorsPolicy);
+app.UseCors(EsologsCorsPolicy);
 
 app.UseRouting();
 app.UseMiddleware<EnsureFreshTokenMiddleware>();

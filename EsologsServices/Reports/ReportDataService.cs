@@ -1,9 +1,11 @@
-﻿using SubclassesTracker.Api.Models;
+﻿using DocumentFormat.OpenXml.Vml;
+using SubclassesTracker.Api.Models;
 using SubclassesTracker.Api.Models.Dto;
 using SubclassesTracker.Api.Models.Responses.Api;
 using SubclassesTracker.Api.Models.Responses.Esologs;
 using SubclassesTracker.Database.Entity;
 using SubclassesTracker.Database.Repository;
+using System.Linq;
 
 namespace SubclassesTracker.Api.EsologsServices.Reports
 {
@@ -43,7 +45,7 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
     {
         private sealed record PlayerKey(string Name, string TrialName, string Display, string Spec);
         private readonly Dictionary<int, SkillInfo> skillsDict = [];
-        private sealed record SkillInfo(string SkillName, string SkillLine, string SkillType);
+        private sealed record SkillInfo(string SkillName, string SkillLine, string SkillType, string? UrlIcon);
 
         public async Task<List<SkillLineReportEsologsResponse>> GetSkillLinesAsync(
                 int zoneId,
@@ -115,12 +117,12 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
             {
                 new(logId, 0, logId, [.. fights
                     .Where(x => fightIdList?.Contains(x.Id) ?? true)
-                    .Where(x => wipes == null || (wipes == 1 && !x.Killed || wipes == 2 && x.Killed))
+                    .Where(x => wipes == null || (wipes == 1 && (!x.Killed ?? true) || wipes == 2 && (x?.Killed ?? false)))
                     .Where(x => bossId == null || !(bossId > -1) || x.EncounterId == bossId)])
             };
 
             var playersByLog = await LoadPlayersForReportsAsync(reports, token);
-            var rows = BuildDistinctBestFightRows(reports, playersByLog, skillsDict);
+            var rows = BuildDistinctBestFightRows(reports, playersByLog, skillsDict, false);
 
             await AddMissingBuffRowsAsync(rows, skillsDict, token);
 
@@ -134,20 +136,17 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                     var allTalents = g
                         .SelectMany(x => x.Talents)
                         .Where(t => skillsDict.ContainsKey(t.Id))
-                        .Select(t => skillsDict[t.Id].SkillLine)
-                        .Distinct()
-                        .ToList();
-
-                    // Add icons
-                    var linesWithIcons = allTalents
-                        .Select(lineName => new PlayerSkillLine(lineName, GetLineIcon(lineName)))
+                        .Select(t => new PlayerSkillLine(
+                            skillsDict[t.Id].SkillLine,
+                            skillsDict[t.Id].UrlIcon))
+                        .DistinctBy(t => t.LineName)
                         .ToList();
 
                     return new PlayerSkilllinesApiResponse
                     {
                         PlayerCharacterName = GetPlayerCharacterName(sample.PlayerId, playersByLog[sample.LogId]),
                         PlayerEsoId = GetPlayerEsoId(sample.PlayerId, playersByLog[sample.LogId]),
-                        PlayerSkillLines = linesWithIcons
+                        PlayerSkillLines = allTalents
                     };
                 })
                 .ToList();

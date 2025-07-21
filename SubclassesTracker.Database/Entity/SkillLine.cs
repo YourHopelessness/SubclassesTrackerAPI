@@ -31,6 +31,13 @@ namespace SubclassesTracker.Database.Entity
         public LineType LineType { get; set; } = null!;
 
         /// <summary>
+        /// Icon of the skill line
+        /// </summary>
+        [Column("icon")]
+        public int? IconId { get; set; }
+        public Icon? Icon { get; set; }
+
+        /// <summary>
         /// Collection of skill tree entries associated with this skill line.
         /// </summary>
         public ICollection<SkillTreeEntry> SkillTreeEntries { get; set; } = new HashSet<SkillTreeEntry>();

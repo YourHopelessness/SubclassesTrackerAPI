@@ -39,7 +39,7 @@ async function doInteractiveAuth(): Promise<Tokens | null> {
   const redirectUri = chrome.identity.getRedirectURL();
   const oauthUrlEndpoint =
     `${API}/oauth/url?clientId=${encodeURIComponent(clientId)}&redirectUri=${encodeURIComponent(redirectUri)}`;
-
+  
   let oauthUrl: string;
   try {
     const r = await fetch(oauthUrlEndpoint);

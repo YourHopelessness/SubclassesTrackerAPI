@@ -21,14 +21,14 @@
     "{{chrome}}.type": "module"
   },
   "description": "Injects parsed ESO Logs classes data into the site.",
-  "permissions": ["storage", "identity", "activeTab"],
+  "permissions": ["storage", "identity", "activeTab", "webNavigation", "scripting"],
   "host_permissions": [
     "https://localhost:7192*",
     "https://*.esologs.com/*"
   ],
   "content_scripts": [
     {
-      "matches": ["https://*.esologs.com/reports*"],
+      "matches": ["https://*.esologs.com/reports/*"],
       "js": ["src/content/esologs.ts"],
       "run_at": "document_end"
     }

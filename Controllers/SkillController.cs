@@ -29,7 +29,7 @@ namespace SubclassesTracker.Api.Controllers
         public async Task<IActionResult> GetPlayersAsync([FromQuery] string logId)
         {
             var fightsIds = await getDataService.GetFigthsAsync(logId);
-            if (fightsIds == null || !fightsIds.Any())
+            if (fightsIds == null || fightsIds.Count == 0)
             {
                 return NotFound("No fights found for the provided log ID.");
             }
@@ -69,6 +69,9 @@ namespace SubclassesTracker.Api.Controllers
             [FromQuery] int? bossId = null,
             [FromQuery] int? wipes = null)
         {
+            if (fightId == null && bossId == null && wipes == null)
+                return NoContent();
+
             return Ok(await reportDataService.GetSkillLinesByReportAsync(logId, fightId, bossId, wipes));
         }
 

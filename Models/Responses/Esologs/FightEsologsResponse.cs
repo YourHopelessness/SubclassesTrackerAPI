@@ -32,6 +32,6 @@ namespace SubclassesTracker.Api.Models.Responses.Esologs
         /// Is boss killed in this fight.
         /// </summary>
         [JsonProperty("kill")]
-        public bool Killed { get; set; }
+        public bool? Killed { get; set; } = false;
     }
 }

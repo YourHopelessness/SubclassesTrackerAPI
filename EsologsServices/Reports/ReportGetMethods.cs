@@ -14,14 +14,21 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
             return await skillsRepository
                 .GetList(x => x.SkillLine.LineType.Name == "Class")
                 .Include(x => x.SkillLine)
+                .Include(x => x.SkillLine.Icon)
                 .Where(x => x.AbilityId != null)
                 .ToDictionaryAsync(
                     k => k.AbilityId!.Value,
-                    v => new SkillInfo(v.SkillName, v.SkillLine.Name, v.SkillType),
+                    v => new SkillInfo(
+                        v.SkillName, 
+                        v.SkillLine.Name, 
+                        v.SkillType, 
+                        v.SkillLine?.Icon?.Url ?? null),
                     token);
         }
 
-        private async Task<List<PlayerRow>> GetBuffsAsync(List<PlayerRow> needBuffs, CancellationToken token)
+        private async Task<List<PlayerRow>> GetBuffsAsync(
+            List<PlayerRow> needBuffs, 
+            CancellationToken token)
         {
             foreach (var row in needBuffs)
             {
@@ -121,7 +128,8 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
         private static List<PlayerRow> BuildDistinctBestFightRows(
             IReadOnlyCollection<FilteredReport> filteredReports,
             Dictionary<string, PlayerListResponse> playersByLog,
-            IReadOnlyDictionary<int, SkillInfo> skillsDict)
+            IReadOnlyDictionary<int, SkillInfo> skillsDict,
+            bool filterNeeded = true)
         {
             var raw = new List<(GroupKey Key, int PlayerId, string LogId, int FightId, int FightScore, List<Talent> Talents)>();
 
@@ -129,7 +137,7 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
             {
                 var players = playersByLog[report.LogId];
 
-                foreach (var fight in report.Fights.Where(f => f.TrialScore.HasValue))
+                foreach (var fight in report.Fights.Where(f => !filterNeeded || f.TrialScore.HasValue))
                 {
                     AddRoleEntries(report, fight, players.Dps, PlayerRole.Dps);
                     AddRoleEntries(report, fight, players.Healers, PlayerRole.Healer);
@@ -159,7 +167,7 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                             specKey,
                             role);
 
-                        raw.Add((key, p.Id, rep.LogId, fight.Id, fight.TrialScore!.Value, talents));
+                        raw.Add((key, p.Id, rep.LogId, fight.Id, fight.TrialScore ?? 0, talents));
                     }
                 }
             }

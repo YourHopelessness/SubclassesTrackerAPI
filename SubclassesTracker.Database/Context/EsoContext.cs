@@ -53,6 +53,11 @@ namespace SubclassesTracker.Database.Context
                 .HasOne(st => st.SkillLine)
                 .WithMany(sl => sl.SkillTreeEntries)
                 .HasForeignKey(st => st.SkillLineId);
+
+            b.Entity<Icon>()
+                .HasMany(x => x.SkillLines)
+                .WithOne(y => y.Icon)
+                .HasForeignKey(x => x.IconId);
         }
     }
 }
