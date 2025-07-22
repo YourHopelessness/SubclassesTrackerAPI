@@ -48,7 +48,7 @@ namespace SubclassesTracker.Api.GraphQLClient
         /// <param name="Code">The unique code identifying the context or session for the request. Cannot be null or empty.</param>
         /// <param name="PlayerId">The identifier of the player for whom buffs are being retrieved.</param>
         /// <param name="FightsIds">A list of fight identifiers for which buffs are being retrieved. Cannot be null.</param>
-        public sealed record GetBuffsVars(string Code, int PlayerId, int[] FightsIds);
+        public sealed record GetBuffsVars(string Code, int PlayerId, int[] FightIds);
 
         /// <summary>
         /// Represents the parameters required to retrieve all encounter variables for a specific zone and difficulty.

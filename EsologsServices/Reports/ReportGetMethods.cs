@@ -10,7 +10,6 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
     {
         private async Task<Dictionary<int, SkillInfo>> LoadSkillsAsync(CancellationToken token)
         {
-
             return await skillsRepository
                 .GetList(x => x.SkillLine.LineType.Name == "Class")
                 .Include(x => x.SkillLine)
@@ -33,7 +32,10 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
             foreach (var row in needBuffs)
             {
                 var buffs = await dataService.GetPlayerBuffsAsync(
-                                row.LogId, row.PlayerId, row.FightIds);
+                    row.LogId, 
+                    row.PlayerId,
+                    row.FightIds, 
+                    token);
 
                 var extra = buffs
                     .Where(b => skillsDict.ContainsKey(b.Id))
@@ -113,8 +115,9 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                 .Select(async r =>
                 {
                     var fightIds = r.Fights.Select(f => f.Id).ToList();
-                    var players = await dataService.GetPlayersAsync(r.LogId, fightIds);
+                    var players = await dataService.GetPlayersAsync(r.LogId, fightIds, token);
                     players.LogId = r.LogId;
+
                     return players;
                 });
 
@@ -128,7 +131,6 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
         private static List<PlayerRow> BuildDistinctBestFightRows(
             IReadOnlyCollection<FilteredReport> filteredReports,
             Dictionary<string, PlayerListResponse> playersByLog,
-            IReadOnlyDictionary<int, SkillInfo> skillsDict,
             bool filterNeeded = true)
         {
             var raw = new List<(GroupKey Key, int PlayerId, string LogId, int FightId, int FightScore, List<Talent> Talents)>();
@@ -195,7 +197,6 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
         /// </summary>
         private async Task AddMissingBuffRowsAsync(
             List<PlayerRow> playerRows,
-            IReadOnlyDictionary<int, SkillInfo> skillsDict,
             CancellationToken token)
         {
             var lacking = playerRows
@@ -279,24 +280,17 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
         private static string GetPlayerCharacterName(int playerId, PlayerListResponse list)
         {
             return list.Dps?.FirstOrDefault(p => p.Id == playerId)?.Name
-            ?? list.Healers?.FirstOrDefault(p => p.Id == playerId)?.Name
-            ?? list.Tanks?.FirstOrDefault(p => p.Id == playerId)?.Name
-            ?? "Anonymous";
+                ?? list.Healers?.FirstOrDefault(p => p.Id == playerId)?.Name
+                ?? list.Tanks?.FirstOrDefault(p => p.Id == playerId)?.Name
+                ?? "Anonymous";
         }
 
         private static string GetPlayerEsoId(int playerId, PlayerListResponse list)
         {
             return list.Dps?.FirstOrDefault(p => p.Id == playerId)?.PlayerEsoId
-            ?? list.Healers?.FirstOrDefault(p => p.Id == playerId)?.PlayerEsoId
-            ?? list.Tanks?.FirstOrDefault(p => p.Id == playerId)?.PlayerEsoId
-            ?? string.Empty;
+                ?? list.Healers?.FirstOrDefault(p => p.Id == playerId)?.PlayerEsoId
+                ?? list.Tanks?.FirstOrDefault(p => p.Id == playerId)?.PlayerEsoId
+                ?? string.Empty;
         }
-
-        private static string GetLineIcon(string lineName)
-        {
-            // Todo lineIcon in esologs
-            return string.Empty;
-        }
-
     }
 }

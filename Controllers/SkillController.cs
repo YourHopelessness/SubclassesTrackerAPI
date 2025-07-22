@@ -83,7 +83,7 @@ namespace SubclassesTracker.Api.Controllers
         [HttpGet("getAllReports")]
         public async Task<IActionResult> GetAllReports()
         {
-            var allReports = await getDataService.GetAllReportsAndFights();
+            var allReports = await getDataService.GetAllReportsAndFightsAsync();
 
             return Ok(allReports);
         }

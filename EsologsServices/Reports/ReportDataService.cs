@@ -1,11 +1,9 @@
-﻿using DocumentFormat.OpenXml.Vml;
-using SubclassesTracker.Api.Models;
+﻿using SubclassesTracker.Api.Models;
 using SubclassesTracker.Api.Models.Dto;
 using SubclassesTracker.Api.Models.Responses.Api;
 using SubclassesTracker.Api.Models.Responses.Esologs;
 using SubclassesTracker.Database.Entity;
 using SubclassesTracker.Database.Repository;
-using System.Linq;
 
 namespace SubclassesTracker.Api.EsologsServices.Reports
 {
@@ -44,7 +42,7 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
         IBaseRepository<Encounter> encounterRepository) : IReportDataService
     {
         private sealed record PlayerKey(string Name, string TrialName, string Display, string Spec);
-        private readonly Dictionary<int, SkillInfo> skillsDict = [];
+        private Dictionary<int, SkillInfo> skillsDict = null!;
         private sealed record SkillInfo(string SkillName, string SkillLine, string SkillType, string? UrlIcon);
 
         public async Task<List<SkillLineReportEsologsResponse>> GetSkillLinesAsync(
@@ -53,10 +51,10 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                 bool useScoreCense = false,
                 CancellationToken token = default)
         {
-            var skillsDict = await LoadSkillsAsync(token);
+            skillsDict ??= await LoadSkillsAsync(token);
 
             // Get zones and fight paralelly
-            var reportsTask = dataService.GetAllReportsAndFights(zoneId, difficulty);
+            var reportsTask = dataService.GetAllReportsAndFightsAsync(zoneId, difficulty, token);
             var zonesTask = LoadTrialZonesAsync(token);
 
             await Task.WhenAll(reportsTask, zonesTask);
@@ -67,13 +65,13 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
             var filteredReports = FilterReports(reports, zones, useScoreCense);
 
             if (filteredReports.Count == 0)
-                return new List<SkillLineReportEsologsResponse>();
+                return [];
 
             var playersByLog = await LoadPlayersForReportsAsync(filteredReports, token);
 
-            var playerRows = BuildDistinctBestFightRows(filteredReports, playersByLog, skillsDict);
+            var playerRows = BuildDistinctBestFightRows(filteredReports, playersByLog);
 
-            await AddMissingBuffRowsAsync(playerRows, skillsDict, token);
+            await AddMissingBuffRowsAsync(playerRows, token);
 
             // Get all roles
             var roleBuckets = playerRows.GroupBy(r => r.Role)
@@ -109,10 +107,10 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
             int? wipes = null,
             CancellationToken token = default)
         {
-            var skillsDict = await LoadSkillsAsync(token);
+            skillsDict ??= await LoadSkillsAsync(token);
 
             var fightIdList = fightId?.Split('.').Select(int.Parse).ToList();
-            var fights = await dataService.GetFigthsAsync(logId);
+            var fights = await dataService.GetFigthsAsync(logId, token);
             var reports = new List<FilteredReport>()
             {
                 new(logId, 0, logId, [.. fights
@@ -122,9 +120,9 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
             };
 
             var playersByLog = await LoadPlayersForReportsAsync(reports, token);
-            var rows = BuildDistinctBestFightRows(reports, playersByLog, skillsDict, false);
+            var rows = BuildDistinctBestFightRows(reports, playersByLog, false);
 
-            await AddMissingBuffRowsAsync(rows, skillsDict, token);
+            await AddMissingBuffRowsAsync(rows, token);
 
             // Grouping by player char name
             var result = rows
@@ -138,7 +136,7 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                         .Where(t => skillsDict.ContainsKey(t.Id))
                         .Select(t => new PlayerSkillLine(
                             skillsDict[t.Id].SkillLine,
-                            skillsDict[t.Id].UrlIcon))
+                            skillsDict[t.Id]?.UrlIcon ?? string.Empty))
                         .DistinctBy(t => t.LineName)
                         .ToList();
 

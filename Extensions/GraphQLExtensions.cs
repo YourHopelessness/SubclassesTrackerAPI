@@ -23,7 +23,8 @@ namespace SubclassesTracker.Api.Extensions
         public static async Task<TResult> QueryAsync<TResult, TVars>(
             this QraphQlExecutor executeParams,
             GraphQlQueryEnum queryName,
-            TVars variables)
+            TVars variables,
+            CancellationToken token = default)
                 where TResult : class, new()
                 where TVars : class
         {
@@ -34,7 +35,8 @@ namespace SubclassesTracker.Api.Extensions
                 variables.FlatAnonToHashString("Saves/" + queryName.ToString() + "/" + queryName.ToString(), includeDate: false) + ".json",
                 executeParams.apiUrl,
                 executeParams.logger,
-                executeParams.factory);
+                executeParams.factory,
+                token);
         }
 
         private static async Task<TResult> ExecuteQueryWithFallbackAsync<TVars, TResult>(
@@ -44,7 +46,8 @@ namespace SubclassesTracker.Api.Extensions
             string cacheName,
             string apiUrl,
             ILogger logger,
-            IHttpClientFactory factory)
+            IHttpClientFactory factory,
+            CancellationToken token = default)
                 where TResult : class, new()
                 where TVars : class
         {
@@ -53,7 +56,7 @@ namespace SubclassesTracker.Api.Extensions
             {
                 try
                 {
-                    string queryText = await File.ReadAllTextAsync(queryFilePath);
+                    string queryText = await File.ReadAllTextAsync(queryFilePath, token);
 
                     using var http = factory.CreateClient("Esologs");
 
@@ -66,16 +69,16 @@ namespace SubclassesTracker.Api.Extensions
                     });
                     var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
-                    var response = await http.PostAsync(apiUrl, content);
+                    var response = await http.PostAsync(apiUrl, content, token);
                     while (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
                     {
                         // If we hit rate limit, wait and retry
                         logger.LogInformation("Rate limit reached, wait 5 minute");
-                        await Task.Delay(TimeSpan.FromMinutes(5));
+                        await Task.Delay(TimeSpan.FromMinutes(5), token);
 
-                        response = await http.PostAsync(apiUrl, content);
+                        response = await http.PostAsync(apiUrl, content, token);
                     }
-                    var raw = await response.Content.ReadAsStringAsync();
+                    var raw = await response.Content.ReadAsStringAsync(token);
 
                     var parsed = JsonConvert.DeserializeObject<JToken>(raw);
                     var entries = parsed?.SelectToken(resultJsonPath);
@@ -84,7 +87,7 @@ namespace SubclassesTracker.Api.Extensions
                     if (result != null)
                     {
                         // If we got a result, save it to cache
-                        await CacheService.SaveReportsToCacheAsync(result, cacheName, logger, true);
+                        await CacheService.SaveReportsToCacheAsync(result, cacheName, logger, true, token);
                     }
 
                     return result ?? new();
