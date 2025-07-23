@@ -6,7 +6,17 @@ on:
       - release
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug SSH connection
+        run: |
+          echo "${{ secrets.YOKO_KEY }}" > key.pem
+          chmod 600 key.pem
+          ssh -vvv -i key.pem -o StrictHostKeyChecking=no ${{ secrets.YOKO_USER }}@${{ secrets.YOKO_HOST }} exit
+          
   build:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,7 +28,9 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore SubclassesTrackerExtension.sln
+        
   publish:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Publish
@@ -29,15 +41,8 @@ jobs:
         with:
           name: SubclassesTracker.Api
           path: publish
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Debug SSH connection
-        run: |
-          echo "${{ secrets.YOKO_KEY }}" > key.pem
-          chmod 600 key.pem
-          ssh -vvv -i key.pem -o StrictHostKeyChecking=no ${{ secrets.YOKO_USER }}@${{ secrets.YOKO_HOST }} exit
   deploy:
+    needs: publish
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to yokocodev.site
