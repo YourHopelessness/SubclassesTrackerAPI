@@ -14,6 +14,7 @@ jobs:
           echo "${{ secrets.YOKO_KEY }}" > key.pem
           chmod 600 key.pem
           ssh -vvv -i key.pem -o StrictHostKeyChecking=no ${{ secrets.YOKO_USER }}@${{ secrets.YOKO_HOST }} exit
+          ls -R
           
   build:
     needs: test
@@ -33,8 +34,16 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+          
       - name: Publish
         run: dotnet publish SubclassesTracker.Api.csproj -c Release -o publish
+
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -45,6 +54,11 @@ jobs:
     needs: publish
     runs-on: ubuntu-latest
     steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: SubclassesTracker.Api
+          
       - name: Deploy to yokocodev.site
         uses: appleboy/scp-action@v0.1.4
         with:
