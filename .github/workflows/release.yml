@@ -1,0 +1,38 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore SubclassesTrackerExtension.sln
+
+      - name: Publish
+        run: dotnet publish SubclassesTracker.Api.csproj -c Release -o publish
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SubclassesTracker.Api
+          path: publish
+
+      - name: Deploy to yokocodev.site
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.YOKO_HOST }}
+          username: ${{ secrets.YOKO_USER }}
+          key: ${{ secrets.YOKO_KEY }}
+          target: ${{ secrets.YOKO_TARGET }}
+          source: "publish/*"
