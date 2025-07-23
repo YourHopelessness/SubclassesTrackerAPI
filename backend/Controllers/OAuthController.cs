@@ -29,7 +29,8 @@ public sealed class OAuthController(
     /// <returns>Auth url in esologs</returns>
     [AllowAnonymous]
     [HttpGet("url")]
-    public IActionResult GetAuthUrl([FromQuery] AuthUriApiRequests authUriRequest)
+    public IActionResult GetAuthUrl(
+        [FromQuery] AuthUriApiRequests authUriRequest)
     {
         var codeVerifier = PKCEHelper.GenerateCodeVerifier();
         var codeChallenge = PKCEHelper.GenerateCodeChallenge(codeVerifier);
@@ -46,7 +47,7 @@ public sealed class OAuthController(
         };
 
         var url = $"{_cfg.AuthEndpoint}{qs.ToQueryString()}";
-        logger.LogInformation($"The client {authUriRequest.ClientId} began authentication");
+        logger.LogInformation($"The client {authUriRequest.ClientId} start authentication");
 
         return Ok(new { url });
     }
@@ -58,7 +59,9 @@ public sealed class OAuthController(
     /// <returns>New token</returns>
     [AllowAnonymous]
     [HttpPost("exchange")]
-    public async Task<IActionResult> ExchangeCode([FromBody] ExchangeApiRequest dto)
+    public async Task<IActionResult> ExchangeCode(
+        [FromBody] ExchangeApiRequest dto,
+        CancellationToken cts = default)
     {
         if (!_verifiers.TryRemove(dto.ClientId, out var codeVerifier))
             return BadRequest("invalid_state");
@@ -72,8 +75,8 @@ public sealed class OAuthController(
             { "code_verifier", codeVerifier }
         });
 
-        var resp = await http.PostAsync(_cfg.TokenEndpoint, content);
-        var json = await resp.Content.ReadAsStringAsync();
+        var resp = await http.PostAsync(_cfg.TokenEndpoint, content, cts);
+        var json = await resp.Content.ReadAsStringAsync(cts);
 
         if (!resp.IsSuccessStatusCode)
             return StatusCode((int)resp.StatusCode, json);
@@ -93,7 +96,9 @@ public sealed class OAuthController(
     /// <returns>New tokens</returns>
     [HttpPost("refresh")]
     [AllowAnonymous]
-    public async Task<IActionResult> Refresh([FromBody] RefreshApiRequest dto)
+    public async Task<IActionResult> Refresh(
+        [FromBody] RefreshApiRequest dto,
+        CancellationToken cts = default)
     {
         var http = _httpFactory.CreateClient();
         var content = new FormUrlEncodedContent(new Dictionary<string, string>{
@@ -102,8 +107,8 @@ public sealed class OAuthController(
             { "refresh_token", dto.RefreshToken }
         });
 
-        var resp = await http.PostAsync(_cfg.TokenEndpoint, content);
-        var json = await resp.Content.ReadAsStringAsync();
+        var resp = await http.PostAsync(_cfg.TokenEndpoint, content, cts);
+        var json = await resp.Content.ReadAsStringAsync(cts);
 
         if (!resp.IsSuccessStatusCode)
             return StatusCode((int)resp.StatusCode, json);
@@ -116,7 +121,9 @@ public sealed class OAuthController(
 
     [HttpPost("callback")]
     [AllowAnonymous]
-    public async Task<IActionResult> Callback([FromBody] ExchangeApiRequest dto)
+    public async Task<IActionResult> Callback(
+        [FromBody] ExchangeApiRequest dto,
+        CancellationToken cts = default)
     {
         if (!_verifiers.TryRemove(dto.ClientId, out var codeVerifier))
             return BadRequest("invalid_state");
@@ -131,8 +138,8 @@ public sealed class OAuthController(
                 { "code_verifier", codeVerifier }
             });
 
-        var resp = await http.PostAsync(_cfg.TokenEndpoint, content);
-        var json = await resp.Content.ReadAsStringAsync();
+        var resp = await http.PostAsync(_cfg.TokenEndpoint, content, cts);
+        var json = await resp.Content.ReadAsStringAsync(cts);
 
         if (!resp.IsSuccessStatusCode)
             return StatusCode((int)resp.StatusCode, json);

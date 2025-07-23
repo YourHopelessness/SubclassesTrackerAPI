@@ -15,9 +15,11 @@ namespace SubclassesTracker.Api.Controllers
         /// <param name="logId"></param>
         /// <returns></returns>
         [HttpGet("getFights")]
-        public async Task<IActionResult> GetFigthsAsync([FromQuery] string logId)
+        public async Task<IActionResult> GetFigthsAsync(
+            [FromQuery] string logId,
+            CancellationToken token = default)
         {
-            return Ok(await getDataService.GetFigthsAsync(logId));
+            return Ok(await getDataService.GetFigthsAsync(logId, token));
         }
 
         /// <summary>
@@ -26,14 +28,18 @@ namespace SubclassesTracker.Api.Controllers
         /// <param name="logId"></param>
         /// <returns></returns>
         [HttpGet("getPlayers")]
-        public async Task<IActionResult> GetPlayersAsync([FromQuery] string logId)
+        public async Task<IActionResult> GetPlayersAsync(
+            [FromQuery] string logId,
+            CancellationToken token = default)
         {
             var fightsIds = await getDataService.GetFigthsAsync(logId);
             if (fightsIds == null || fightsIds.Count == 0)
             {
                 return NotFound("No fights found for the provided log ID.");
             }
-            var players = await getDataService.GetPlayersAsync(logId, [.. fightsIds.Select(x => x.Id)]);
+            var players = await getDataService.GetPlayersAsync(
+                logId, [.. fightsIds.Select(x => x.Id)], token);
+
             return Ok(players);
         }
 
@@ -44,14 +50,19 @@ namespace SubclassesTracker.Api.Controllers
         /// <param name="playerId"></param>
         /// <returns></returns>
         [HttpGet("getPlayerBuffs")]
-        public async Task<IActionResult> GetPlayerBuffsAsync([FromQuery] string logId, [FromQuery] int playerId)
+        public async Task<IActionResult> GetPlayerBuffsAsync(
+            [FromQuery] string logId, 
+            [FromQuery] int playerId,
+            CancellationToken token = default)
         {
-            var fightsIds = await getDataService.GetFigthsAsync(logId);
-            if (fightsIds == null || !fightsIds.Any())
+            var fightsIds = await getDataService.GetFigthsAsync(logId, token);
+            if (fightsIds == null || fightsIds.Count == 0)
             {
                 return NotFound("No fights found for the provided log ID.");
             }
-            var buffs = await getDataService.GetPlayerBuffsAsync(logId, playerId, [.. fightsIds.Select(x => x.Id)]);
+            var buffs = await getDataService.GetPlayerBuffsAsync(
+                logId, playerId, [.. fightsIds.Select(x => x.Id)], token);
+
             return Ok(buffs);
         }
 
@@ -67,12 +78,14 @@ namespace SubclassesTracker.Api.Controllers
             [FromQuery] string logId,
             [FromQuery] string? fightId = null,
             [FromQuery] int? bossId = null,
-            [FromQuery] int? wipes = null)
+            [FromQuery] int? wipes = null,
+            CancellationToken token = default)
         {
             if (fightId == null && bossId == null && wipes == null)
                 return NoContent();
 
-            return Ok(await reportDataService.GetSkillLinesByReportAsync(logId, fightId, bossId, wipes));
+            return Ok(await reportDataService.GetSkillLinesByReportAsync(
+                logId, fightId, bossId, wipes, token));
         }
 
 
@@ -81,9 +94,10 @@ namespace SubclassesTracker.Api.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet("getAllReports")]
-        public async Task<IActionResult> GetAllReports()
+        public async Task<IActionResult> GetAllReports(
+            CancellationToken token = default)
         {
-            var allReports = await getDataService.GetAllReportsAndFightsAsync();
+            var allReports = await getDataService.GetAllReportsAndFightsAsync(token: token);
 
             return Ok(allReports);
         }

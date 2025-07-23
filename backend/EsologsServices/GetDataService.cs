@@ -60,8 +60,7 @@ namespace SubclassesTracker.Api.EsologsServices
         public async Task<List<FightEsologsResponse>> GetFigthsAsync(string logId, CancellationToken token = default)
         {
             var fights = await qlExecutor.QueryAsync<List<FightEsologsResponse>, GetFightsVars>(
-                GraphQlQueryEnum.GetFights,
-                new GetFightsVars(logId));
+                GraphQlQueryEnum.GetFights, new GetFightsVars(logId), token: token);
 
             return fights;
         }
@@ -69,8 +68,7 @@ namespace SubclassesTracker.Api.EsologsServices
         public async Task<PlayerListResponse> GetPlayersAsync(string logId, List<int> fightsIds, CancellationToken token = default)
         {
             var players = await qlExecutor.QueryAsync<PlayerListResponse, GetPlayersVars>(
-                GraphQlQueryEnum.GetPlayers,
-                new GetPlayersVars(logId, [.. fightsIds]));
+                GraphQlQueryEnum.GetPlayers, new GetPlayersVars(logId, [.. fightsIds]), token: token);
 
             return players;
         }
@@ -79,8 +77,7 @@ namespace SubclassesTracker.Api.EsologsServices
             string logId, int playerId, List<int> fightId, CancellationToken token = default)
         {
             var buffs = await qlExecutor.QueryAsync<List<BuffEsologsResponse>, GetBuffsVars>(
-                GraphQlQueryEnum.GetBuffs,
-                new GetBuffsVars(logId, playerId, [.. fightId]));
+                GraphQlQueryEnum.GetBuffs, new GetBuffsVars(logId, playerId, [.. fightId]), token: token);
 
             return buffs;
         }
@@ -117,7 +114,8 @@ namespace SubclassesTracker.Api.EsologsServices
 
                     var result = await qlExecutor.QueryAsync<ReportRequestEsologsResponse, GetReportsWithFightsVars>(
                             GraphQlQueryEnum.GetReportsWithFights,
-                            variables);
+                            variables,
+                            token);
 
                     return (result.Data, result.HasMorePages);
                 },
@@ -130,8 +128,7 @@ namespace SubclassesTracker.Api.EsologsServices
         public async Task<List<ZoneApiResponse>> GetAllZonesAndEncountersAsync(CancellationToken token = default)
         {
             var zones = await qlExecutor.QueryAsync<List<ZoneApiResponse>, GetAllEncountersVars>(
-                GraphQlQueryEnum.GetAllEncounters,
-                new GetAllEncountersVars());
+                GraphQlQueryEnum.GetAllEncounters, new GetAllEncountersVars(), token: token);
 
             return zones;
         }
