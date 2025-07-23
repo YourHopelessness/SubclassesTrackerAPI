@@ -57,7 +57,7 @@ jobs:
           zip -r ../SubclassesExtension_${{ steps.vars.outputs.version }}.zip ./
 
       - run: ls -la
-    
+
       - name: Upload extension to Release
         run: |
           gh release upload ${{ github.ref_name }} SubclassesExtension_${{ steps.vars.outputs.version }}.zip --clobber
