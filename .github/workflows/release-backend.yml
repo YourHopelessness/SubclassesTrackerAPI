@@ -66,7 +66,7 @@ jobs:
           host: ${{ secrets.YOKO_HOST }}
           username: ${{ secrets.YOKO_USER }}
           key: ${{ secrets.YOKO_KEY }}
-          source: "publish/*"
+          source: "backend/publish/*"
           target: ${{ secrets.YOKO_TARGET }}
           strip_components: 1
           rm: true
