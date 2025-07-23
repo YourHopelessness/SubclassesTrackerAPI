@@ -27,7 +27,7 @@ const string EsologsCorsPolicy = "EsologsCorsPolicy";
 builder.Services.AddCors(opts =>
 {
     opts.AddPolicy(ExtensionCorsPolicy, b => b
-        .WithOrigins("chrome-extension://mpldcmnhbilholjaopjhcjfhcimgehjf")
+        .WithOrigins(builder.Configuration.GetSection("LinesConfig:ChromeExtensionID").Value!)
         .WithMethods("GET", "POST")
         .AllowAnyHeader()
         .AllowCredentials()
@@ -76,9 +76,6 @@ builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
 builder.Services.AddSingleton<IJobMonitor, JobMonitor>();
 // Register the job
 builder.Services.AddScoped<JobDataCollection>();
-
-// Add graphql
-builder.Services.AddGraphQLClient();
 
 // Add controllers
 builder.Services.AddControllers();

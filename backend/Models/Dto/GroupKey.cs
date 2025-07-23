@@ -1,4 +1,6 @@
-﻿namespace SubclassesTracker.Api.Models.Dto
+﻿using SubclassesTracker.Api.Models.Enums;
+
+namespace SubclassesTracker.Api.Models.Dto
 {
     public sealed record GroupKey(
         string PlayerName,

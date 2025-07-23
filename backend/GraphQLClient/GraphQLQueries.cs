@@ -1,4 +1,4 @@
-﻿using GraphQLClientNS;
+﻿using SubclassesTracker.Api.Models.Enums;
 
 namespace SubclassesTracker.Api.GraphQLClient
 {

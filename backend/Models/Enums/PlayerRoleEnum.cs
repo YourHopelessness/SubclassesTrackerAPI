@@ -1,4 +1,4 @@
-﻿namespace SubclassesTracker.Api.Models
+﻿namespace SubclassesTracker.Api.Models.Enums
 {
     public enum PlayerRole 
     { 

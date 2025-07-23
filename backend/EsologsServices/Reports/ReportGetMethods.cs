@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SubclassesTracker.Api.Models;
 using SubclassesTracker.Api.Models.Dto;
+using SubclassesTracker.Api.Models.Enums;
 using SubclassesTracker.Api.Models.Responses.Api;
 using SubclassesTracker.Api.Models.Responses.Esologs;
 
