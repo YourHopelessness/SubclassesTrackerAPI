@@ -1,8 +1,8 @@
-﻿using GraphQLClientNS;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using SubclassesTracker.Api.Extensions;
 using SubclassesTracker.Api.GraphQLClient;
 using SubclassesTracker.Api.Models.Dto;
+using SubclassesTracker.Api.Models.Enums;
 using SubclassesTracker.Api.Models.Responses.Api;
 using SubclassesTracker.Api.Models.Responses.Esologs;
 using static SubclassesTracker.Api.GraphQLClient.GraphQLQueries;
@@ -54,7 +54,7 @@ namespace SubclassesTracker.Api.EsologsServices
         IHttpClientFactory httpClientFactory,
         ILogger<GetDataService> logger) : IGetDataService
     {
-        private readonly QraphQlExecutor qlExecutor = 
+        private readonly QraphQlExecutor qlExecutor =
             new(options.Value.EsoLogsApiUrl, logger, httpClientFactory);
 
         public async Task<List<FightEsologsResponse>> GetFigthsAsync(string logId, CancellationToken token = default)

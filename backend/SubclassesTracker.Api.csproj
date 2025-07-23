@@ -4,6 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>c30dc4a8-b60d-47ee-87fa-3e03eeccf807</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,15 +20,12 @@
 
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.105.0" />
-    <PackageReference Include="EPPlus" Version="8.0.6" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="OpenIddict" Version="6.4.0" />
     <PackageReference Include="OpenIddict.AspNetCore" Version="6.4.0" />
     <PackageReference Include="OpenIddict.Client" Version="6.4.0" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.11" />
-    <PackageReference Include="StrawberryShake.Transport.Http" Version="15.1.7" />
-    <PackageReference Include="StrawberryShake.Transport.WebSockets" Version="15.1.7" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1" />
   </ItemGroup>
 
@@ -36,8 +34,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="**/*.graphql" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Lines\skillTree.db">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
