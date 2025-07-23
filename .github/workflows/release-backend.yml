@@ -40,12 +40,11 @@ jobs:
       - name: Publish
         run: dotnet publish SubclassesTracker.Api.csproj -c Release -o publish
 
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: SubclassesTracker.Api
-          path: publish
+          path: backend/publish
           
   deploy:
     needs: publish
@@ -58,7 +57,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: SubclassesTracker.Api
-          path: publish
+          path: backend/publish
 
       # 1) Copy the new build to the server
       - name: Copy build to server
