@@ -62,7 +62,7 @@ export async function esologsInjectLines(url: string, tabId: number): Promise<vo
           gap:3px !important;vertical-align:middle !important;
         }
         .${WRAP_CLASS}.big img.${MY_ICON_CLASS}{
-          width:42px !important;height:42px !important;margin:0 3px 0 0 !important;
+          width:44px !important;height:44px !important;margin:0 3px 0 0 !important;
           vertical-align:middle !important; align-items:center !important;
         }
       `;
@@ -92,7 +92,12 @@ export async function esologsInjectLines(url: string, tabId: number): Promise<vo
       function getLookupName(el: HTMLElement): string {
         const orig = el.getAttribute(NAME_ORIG_ATTR);
         if (orig) return orig.trim();
-        return (el.textContent || '').trim();
+
+        // Clone element to safely remove `.sub-arrow`
+        const clonedEl = el.cloneNode(true) as HTMLElement;
+        clonedEl.querySelectorAll('.sub-arrow').forEach(sub => sub.remove());
+
+        return (clonedEl.textContent || '').trim();
       }
 
       function makeSig(pl: PlayerSkilllinesApiResponse): string {
@@ -172,15 +177,31 @@ export async function esologsInjectLines(url: string, tabId: number): Promise<vo
         }
         if (container.getAttribute(NAME_DONE_ATTR) === '1') return;
 
-        const tn = Array.prototype.find.call(
-          container.childNodes,
-          (n: Node) => n.nodeType === Node.TEXT_NODE && (n.textContent || '').trim(),
-        ) as Text | undefined;
+        let textContainer: HTMLElement | null = null;
 
-        if (tn) tn.textContent = ' ' + esoId;
-        else container.appendChild(document.createTextNode(' ' + esoId));
+        // If this is a menu link, then text should be in <span>
+        if (container.matches('a.actor-menu-link')) {
+          textContainer = container.querySelector(`span.${WRAP_CLASS}`) || container;
+        } else {
+          textContainer = container;
+        }
+
+        // Remove old text
+        textContainer.childNodes.forEach(n => {
+          if (n.nodeType === Node.TEXT_NODE) n.remove();
+        });
+
+        // Insert player eso id
+        textContainer.appendChild(document.createTextNode(' ' + esoId));
 
         container.setAttribute(NAME_DONE_ATTR, '1');
+
+        // Replace id in menu links
+        const abilityMenuTd = container.closest('tr')?.querySelector('.ability-menu-id');
+        if (abilityMenuTd) {
+          const originalName = container.getAttribute(NAME_ORIG_ATTR) || '';
+          abilityMenuTd.textContent = originalName;
+        }
       }
 
       function buildIcons(lines: SkillLineDto[]): DocumentFragment {
@@ -196,46 +217,55 @@ export async function esologsInjectLines(url: string, tabId: number): Promise<vo
       }
 
       /**
-       * Wrap the target name into span. For menu links we must insert AFTER .sub-arrow.
-       */
+      * Wrap the target name into span. For menu links we must insert AFTER .sub-arrow.
+      */
       function wrapName(nameEl: HTMLElement, big: boolean): HTMLElement {
-        const existing = nameEl.closest('.' + WRAP_CLASS) as HTMLElement | null;
-        if (existing) {
-            existing.classList.toggle('big', big);
-
-            return existing;
+        if (nameEl.classList.contains(WRAP_CLASS) && nameEl.hasAttribute('data-eso-wrapped')) {
+          nameEl.classList.toggle('big', big);
+          return nameEl;
         }
 
-        if (nameEl.matches('a.actor-menu-link')) {
-            const link  = nameEl as HTMLAnchorElement;
-            const arrow = link.querySelector('.sub-arrow');
-            const wrap  = document.createElement('span');
-            wrap.className = `${WRAP_CLASS} ${big ? 'big' : ''}`;
+        if (nameEl.parentElement?.classList.contains(WRAP_CLASS) && nameEl.parentElement?.hasAttribute('data-eso-wrapped')) {
+          nameEl.parentElement.classList.toggle('big', big);
+          return nameEl.parentElement;
+        }
 
-            if (arrow) {
-                arrow.after(wrap);
-                while (wrap.nextSibling && wrap.nextSibling !== arrow) {
-                    wrap.appendChild(wrap.nextSibling);
-            }
-            } else {
-                link.prepend(wrap);
-                while (wrap.nextSibling) {
-                    wrap.appendChild(wrap.nextSibling);
-                }
-            }
+        const existingChildWrapper = Array.from(nameEl.children).find(child => 
+          child.classList.contains(WRAP_CLASS) && child.hasAttribute('data-eso-wrapped')
+        ) as HTMLElement | undefined;
 
-            link.setAttribute(WRAPPED_ATTR, '1');
-
-            return wrap;
+        if (existingChildWrapper) {
+          existingChildWrapper.classList.toggle('big', big);
+          return existingChildWrapper;
         }
 
         const wrap = document.createElement('span');
         wrap.className = `${WRAP_CLASS} ${big ? 'big' : ''}`;
-        insertBeforeSafe(nameEl.parentNode as Node, wrap, nameEl);
-        wrap.appendChild(nameEl);
+        wrap.setAttribute('data-eso-wrapped', '1');
+
+        if (nameEl.matches('a.actor-menu-link')) {
+          const link = nameEl as HTMLAnchorElement;
+          const arrow = link.querySelector('.sub-arrow');
+
+          if (arrow) {
+            arrow.after(wrap);
+            while (wrap.nextSibling && wrap.nextSibling !== arrow) {
+              wrap.appendChild(wrap.nextSibling);
+            }
+          } else {
+            link.prepend(wrap);
+            while (wrap.nextSibling) {
+              wrap.appendChild(wrap.nextSibling);
+            }
+          }
+          link.setAttribute(WRAPPED_ATTR, '1');
+        } else {
+          insertBeforeSafe(nameEl.parentNode!, wrap, nameEl);
+          wrap.appendChild(nameEl);
+        }
 
         return wrap;
-     }
+      }
 
       /** Single default IMG -> our icons */
       function replaceThisImg(img: HTMLImageElement, pl: PlayerSkilllinesApiResponse) {
