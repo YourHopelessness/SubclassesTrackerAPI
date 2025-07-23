@@ -2,6 +2,9 @@
 
 namespace SubclassesTracker.Api.GraphQLClient
 {
+    /// <summary>
+    /// GraphQl query enum name
+    /// </summary>
     public enum GraphQlQueryEnum
     {
         GetPlayers,
@@ -12,6 +15,9 @@ namespace SubclassesTracker.Api.GraphQLClient
     }
     public static class GraphQLQueries
     {
+        /// <summary>
+        /// Path to the data in the query response for each GraphQL query.
+        /// </summary>
         public readonly static Dictionary<GraphQlQueryEnum, string> QueryRootPathResponse =
             new()
             {
@@ -20,8 +26,8 @@ namespace SubclassesTracker.Api.GraphQLClient
                 { GraphQlQueryEnum.GetAllEncounters, "data.worldData.zones" },
                 { GraphQlQueryEnum.GetReportsWithFights, "data.reportData.reports" },
                 { GraphQlQueryEnum.GetBuffs, "data.reportData.report.table.data.auras" },
-
             };
+
         /// <summary>
         /// Variables for GraphQL request
         /// </summary>
