@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: Build and Deploy API
 
 on:
   workflow_dispatch:
@@ -63,6 +63,8 @@ jobs:
       - name: Copy build to server
         uses: appleboy/scp-action@v0.1.4
         with:
+          script: | 
+            sudo systemctl stop subclasses-api
           host: ${{ secrets.YOKO_HOST }}
           username: ${{ secrets.YOKO_USER }}
           key: ${{ secrets.YOKO_KEY }}
@@ -80,6 +82,5 @@ jobs:
           key: ${{ secrets.YOKO_KEY }}
           script: |
             set -e
-            sudo systemctl stop subclasses-tracker.service
-            sudo systemctl start subclasses-tracker.service
-            sudo systemctl status subclasses-tracker.service --no-pager
+            sudo systemctl start subclasses-api
+            sudo systemctl status subclasses-api --no-pager
