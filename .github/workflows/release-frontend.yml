@@ -1,0 +1,46 @@
+name: Build Browser Extension (Vite)
+
+on:
+  push:
+    tags:
+      - 'frontend-release-*'   # only tags that start with this prefix
+
+jobs:
+  build-extension:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extension
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1. Extract semver from tag
+      - name: Get version
+        id: vars
+        run: |
+          FULL_TAG=${GITHUB_REF#refs/tags/}        # frontend-release-1.2.3
+          VERSION=${FULL_TAG#frontend-release-}    # 1.2.3
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      # 2. Patch manifest.json (works for both v2 and v3)
+      - name: Inject version into manifest
+        run: |
+          tmp=$(mktemp)
+          jq --arg v "${{ steps.vars.outputs.version }}" \
+             '.version = $v' src/manifest.json > "$tmp" && mv "$tmp" src/manifest.json
+
+      # 3. Install & build
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: extension/package-lock.json
+      - run: npm ci
+      - run: npm run build   # outputs to extension/dist
+
+      # 4. Upload the unpacked extension
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SubclassesTracker-${{ steps.vars.outputs.version }}
+          path: extension/dist
+          retention-days: 30
