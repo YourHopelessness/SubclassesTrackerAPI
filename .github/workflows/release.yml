@@ -58,7 +58,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: SubclassesTracker.Api
-          
+          path: publish
+  
+      - run: ls -la publish
+  
       - name: Deploy to yokocodev.site
         uses: appleboy/scp-action@v0.1.4
         with:
