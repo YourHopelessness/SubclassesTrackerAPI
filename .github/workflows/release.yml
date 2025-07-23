@@ -18,7 +18,9 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore SubclassesTrackerExtension.sln
-
+  publish:
+    runs-on: ubuntu-latest
+    steps:
       - name: Publish
         run: dotnet publish SubclassesTracker.Api.csproj -c Release -o publish
 
@@ -27,7 +29,17 @@ jobs:
         with:
           name: SubclassesTracker.Api
           path: publish
-
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug SSH connection
+        run: |
+          echo "${{ secrets.YOKO_KEY }}" > key.pem
+          chmod 600 key.pem
+          ssh -vvv -i key.pem -o StrictHostKeyChecking=no ${{ secrets.YOKO_USER }}@${{ secrets.YOKO_HOST }} exit
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to yokocodev.site
         uses: appleboy/scp-action@v0.1.4
         with:
