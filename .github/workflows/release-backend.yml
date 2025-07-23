@@ -40,7 +40,6 @@ jobs:
       - name: Publish
         run: dotnet publish SubclassesTracker.Api.csproj -c Release -o publish
 
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
