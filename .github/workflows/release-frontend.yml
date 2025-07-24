@@ -54,7 +54,7 @@ jobs:
       - name: Zip extension
         run: |
           cd dist
-          zip -r SubclassesExtension_${{ steps.vars.outputs.version }}.zip dist
+          zip -r ../SubclassesExtension_${{ steps.vars.outputs.version }}.zip ./
 
       - run: ls -la
     
