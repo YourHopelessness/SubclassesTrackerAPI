@@ -21,15 +21,11 @@ async function init() {
       await chrome.runtime.sendMessage(
         { type: AUTH_LOGIN_INTERACTIVE } as MsgAuthLogin
       );
+      window.close();
     });
   } else {
     const tpl = (document.getElementById('loggedIn') as HTMLTemplateElement).content.cloneNode(true) as DocumentFragment;
     state.appendChild(tpl);
-
-    state.querySelector('#reAuth')?.addEventListener('click', () => {
-      chrome.runtime.sendMessage({ type: 'RE_AUTH' });
-      window.close();
-    });
   }
 }
 

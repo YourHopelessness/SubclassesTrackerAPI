@@ -1,2 +1,113 @@
-body { font-family: system-ui, sans-serif; }
-button { cursor: pointer; }
+/* ---------- Root tokens ---------- */
+:root {
+  --eso-purple: #8e44ad;
+  --eso-purple-glow: #a569bd;
+  --dark-bg: rgba(20, 20, 25, 0.85);
+  --text-color: #e4e4e7;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --radius: 8px;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --font: "Segoe UI", system-ui, sans-serif;
+}
+
+/* ---------- Global reset ---------- */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font);
+  color: var(--text-color);
+  background: var(--dark-bg);
+  backdrop-filter: blur(12px);
+  min-width: 260px;
+  line-height: 1.4;
+}
+
+/* ---------- Typography ---------- */
+h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: #fff;
+}
+
+p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* ---------- Form ---------- */
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  letter-spacing: 0.3px;
+  color: #d1d1d6;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  color: var(--text-color);
+  font-size: 0.875rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--eso-purple);
+  box-shadow: 0 0 0 2px var(--eso-purple-glow);
+}
+
+/* ---------- Button ---------- */
+button {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--eso-purple);
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  transition: background 0.2s, transform 0.1s;
+  box-shadow: var(--shadow);
+}
+
+button:hover {
+  background: var(--eso-purple-glow);
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+/* ---------- State messages ---------- */
+.text-green-700 {
+  color: #22c55e;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.text-green-700::before {
+  content: "✔";
+  color: #22c55e;
+  font-size: 1rem;
+}
+
+/* ---------- Misc spacing ---------- */
+.p-4 {
+  padding: 1.25rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.75rem;
+}

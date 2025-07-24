@@ -1,5 +1,5 @@
 import { API } from '../constants';
-import { getClientId, getTokens, saveTokens } from '../shared/storage';
+import { clearClientId, getClientId, getTokens, saveTokens } from '../shared/storage';
 import type { Tokens } from '../types/tokens';
 import { waitForClientIdFromStorage } from './client';
 
@@ -32,6 +32,8 @@ async function doInteractiveAuth(): Promise<Tokens | null> {
       clientId = await waitForClientIdFromStorage();
     } catch (err) {
       console.error('[auth] clientId timeout', err);
+      clearClientId();
+
       return null;
     }
   }
@@ -48,6 +50,8 @@ async function doInteractiveAuth(): Promise<Tokens | null> {
     oauthUrl = j.url;
   } catch (err) {
     console.error('[auth] failed to get oauth url', err);
+    clearClientId();
+
     return null;
   }
 
@@ -56,16 +60,21 @@ async function doInteractiveAuth(): Promise<Tokens | null> {
     finalUrl = await chrome.identity.launchWebAuthFlow({ url: oauthUrl, interactive: true });
   } catch (err) {
     console.error('[auth] launchWebAuthFlow error', err);
+    clearClientId();
+
     return null;
   }
   if (!finalUrl) {
     console.error('[auth] empty redirect');
+    clearClientId();
+
     return null;
   }
 
   const code = extractAuthCode(finalUrl);
   if (!code) {
     console.error('[auth] no code in redirect');
+
     return null;
   }
 
@@ -83,6 +92,8 @@ async function doInteractiveAuth(): Promise<Tokens | null> {
     return tokens;
   } catch (err) {
     console.error('[auth] exchange failed', err);
+    clearClientId();
+
     return null;
   }
 }
@@ -111,10 +122,12 @@ function extractAuthCode(url: string): string | null {
     if (u.hash) {
       const hashParams = new URLSearchParams(u.hash.startsWith('#') ? u.hash.slice(1) : u.hash);
       code = hashParams.get('code');
+
       if (code) return code;
     }
   } catch {
-    /* ignore */
+    clearClientId();
   }
+
   return null;
 }

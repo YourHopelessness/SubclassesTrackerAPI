@@ -9,6 +9,7 @@
     "96": "icon/96.png",
     "128": "icon/128.png"
   },
+  "version" : "0.0.1",
   "{{chrome}}.action": {
     "default_popup": "src/popup/popup.html"
   },
@@ -23,7 +24,7 @@
   "description": "Injects parsed ESO Logs classes data into the site.",
   "permissions": ["storage", "identity", "activeTab", "webNavigation", "scripting"],
   "host_permissions": [
-    "https://localhost:7192*",
+    "http://yokocodev.site:80*",
     "https://*.esologs.com/*"
   ],
   "content_scripts": [

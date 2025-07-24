@@ -4,6 +4,12 @@ export function saveClientId(id: string) {
   return chrome.storage.local.set({ clientId: id });
 }
 
+export function clearClientId() {
+  chrome.storage.local.remove(['clientId'], () => {
+    console.log('Client ID resetted');
+  });
+}
+
 export async function getClientId(): Promise<string | null> {
   const { clientId } = await chrome.storage.local.get('clientId');
   return clientId ?? null;
