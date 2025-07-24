@@ -10,13 +10,15 @@ The backend and extension can be used together or separately. See the individual
 ## Quick start
 
 1. Clone the repository and install the dependencies for each project.
-2. Build and run the backend service:
+2. *(Optional)* run the backend locally. The API is already hosted remotely so this step can be skipped:
 
 ```bash
 cd backend
  dotnet restore
  dotnet run
 ```
+
+Alternatively, skip this step and use the API instance already running on the remote host.
 
 3. Download the latest browser extension from the [releases page](https://github.com/YourHopelessness/SubclassesTrackerAPI/releases).
 

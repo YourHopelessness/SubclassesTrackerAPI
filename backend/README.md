@@ -4,6 +4,8 @@ This repository contains an ASP.NET Core API for retrieving and processing
 ESO Logs data. It interacts with the official ESO Logs GraphQL API to fetch
 reports, fights, players and buff information for Elder Scrolls Online.
 
+The API is also deployed on a remote host, so running it locally is optional if you only need to consume the service.
+
 ## Features
 
 - OAuth authentication flow to obtain access tokens for the ESO Logs API.
