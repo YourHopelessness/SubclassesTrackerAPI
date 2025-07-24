@@ -1,0 +1,65 @@
+name: Build Browser Extension (Vite)
+
+on:
+  push:
+    tags:
+      - 'frontend-release-*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-extension:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1. Extract semver from tag
+      - name: Get version
+        id: vars
+        run: |
+          FULL_TAG=${GITHUB_REF#refs/tags/}        # frontend-release-1.2.3
+          VERSION=${FULL_TAG#frontend-release-}    # 1.2.3
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      # 2. Patch manifest.json (works for both v2 and v3)
+      - name: Inject version into manifest
+        run: |
+          tmp=$(mktemp)
+          jq --arg v "${{ steps.vars.outputs.version }}" \
+             '.version = $v' src/manifest.json > "$tmp" && mv "$tmp" src/manifest.json
+
+      # 3. Install & build
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build 
+
+      # 4. Build new release and attach to the release
+      - name: Install GitHub CLI
+        run: sudo apt-get update && sudo apt-get install -y gh
+
+      - name: Create GitHub Release (if not exists)
+        run: gh release create ${{ github.ref_name }} --title "Frontend Release ${{ steps.vars.outputs.version }}" --notes "Auto-generated from CI"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 5. Zip extension
+      - name: Zip extension
+        run: |
+          cd dist
+          zip -r ../SubclassesExtension_${{ steps.vars.outputs.version }}.zip ./
+
+      - run: ls -la
+    
+      - name: Upload extension to Release
+        run: |
+          gh release upload ${{ github.ref_name }} SubclassesExtension_${{ steps.vars.outputs.version }}.zip --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

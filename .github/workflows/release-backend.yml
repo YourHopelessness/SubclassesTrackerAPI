@@ -1,0 +1,86 @@
+name: Build and Deploy API
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'backend-release-*'
+
+jobs:     
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore SubclassesTrackerExtension.sln
+        
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+          
+      - name: Publish
+        run: dotnet publish SubclassesTracker.Api.csproj -c Release -o publish
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SubclassesTracker.Api
+          path: backend/publish
+          
+  deploy:
+    needs: publish
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: SubclassesTracker.Api
+          path: backend/publish
+
+      # 1) Copy the new build to the server
+      - name: Copy build to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          script: | 
+            sudo systemctl stop subclasses-api
+          host: ${{ secrets.YOKO_HOST }}
+          username: ${{ secrets.YOKO_USER }}
+          key: ${{ secrets.YOKO_KEY }}
+          source: "backend/publish/*"
+          target: ${{ secrets.YOKO_TARGET }}
+          strip_components: 1
+          rm: true
+
+      # 2) Stop → deploy → start the service
+      - name: Restart systemd service
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.YOKO_HOST }}
+          username: ${{ secrets.YOKO_USER }}
+          key: ${{ secrets.YOKO_KEY }}
+          script: |
+            set -e
+            sudo systemctl start subclasses-api
+            sudo systemctl status subclasses-api --no-pager
