@@ -55,3 +55,4 @@ Once running, the following routes are available under `/api/skill`:
 
 See the [documentation](docs/API.md) for more details.
 
+Pre-built extension packages are available on the [releases page](https://github.com/YourHopelessness/SubclassesTrackerAPI/releases). See [../docs/extension_installation.md](../docs/extension_installation.md) for installation instructions.
