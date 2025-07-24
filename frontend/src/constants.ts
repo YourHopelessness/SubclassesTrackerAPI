@@ -1,7 +1,7 @@
 // ** Constants **
 
 // ** API **
-export const API = 'https://localhost:7192/api';
+export const API = 'http://yokocodev.site:80/api';
 
 // ** Messages **
 export const ESO_PAGE_READY = 'ESO_PAGE_READY';
