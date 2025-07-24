@@ -53,11 +53,13 @@ jobs:
       # 5. Zip extension
       - name: Zip extension
         run: |
-          cd frontend/dist
-          zip -r ../SubclassesExtension_${{ steps.vars.outputs.version }}.zip ./
+          cd dist
+          zip -r SubclassesExtension_${{ steps.vars.outputs.version }}.zip dist
+
+      - run: ls -la
     
       - name: Upload extension to Release
         run: |
-          gh release upload ${{ github.ref_name }} frontend/SubclassesExtension_${{ steps.vars.outputs.version }}.zip --clobber
+          gh release upload ${{ github.ref_name }} SubclassesExtension_${{ steps.vars.outputs.version }}.zip --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
