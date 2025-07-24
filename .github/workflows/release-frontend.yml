@@ -3,7 +3,10 @@ name: Build Browser Extension (Vite)
 on:
   push:
     tags:
-      - 'frontend-release-*'   # only tags that start with this prefix
+      - 'frontend-release-*'
+
+permissions:
+  contents: write
 
 jobs:
   build-extension:
@@ -36,11 +39,25 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
-      - run: npm run build   # outputs to extension/dist
+      - run: npm run build 
 
-      # 4. Upload the unpacked extension
-      - uses: actions/upload-artifact@v4
-        with:
-          name: SubclassesTracker-${{ steps.vars.outputs.version }}
-          path: extension/dist
-          retention-days: 30
+      # 4. Build new release and attach to the release
+      - name: Install GitHub CLI
+        run: sudo apt-get update && sudo apt-get install -y gh
+
+      - name: Create GitHub Release (if not exists)
+        run: gh release create ${{ github.ref_name }} --title "Frontend Release ${{ steps.vars.outputs.version }}" --notes "Auto-generated from CI"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 5. Zip extension
+      - name: Zip extension
+        run: |
+          cd frontend/dist
+          zip -r ../SubclassesExtension_${{ steps.vars.outputs.version }}.zip ./
+    
+      - name: Upload extension to Release
+        run: |
+          gh release upload ${{ github.ref_name }} frontend/SubclassesExtension_${{ steps.vars.outputs.version }}.zip --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
