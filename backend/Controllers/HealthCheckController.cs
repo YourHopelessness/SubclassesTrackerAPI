@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using SubclassesTracker.Database.Context;
 
 namespace SubclassesTracker.Api.Controllers
 {
@@ -9,15 +11,20 @@ namespace SubclassesTracker.Api.Controllers
     [Route("api/[controller]")]
     public class HealthCheckController : ControllerBase
     {
-        /// <summary>
-        /// Returns a simple health check response.
-        /// </summary>
-        /// <returns>Health check response.</returns>
-        [HttpGet]
+        [HttpGet("health")]
         [AllowAnonymous]
-        public IActionResult Get()
+        public async Task<IActionResult> HealthCheck([FromServices] EsoContext db, CancellationToken token)
         {
-            return Ok(new { status = "Healthy" });
+            try
+            {
+                await db.Database.ExecuteSqlRawAsync("SELECT 1", token);
+
+                return Ok("Healthy");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Unhealthy: {ex.Message}");
+            }
         }
     }
 }
