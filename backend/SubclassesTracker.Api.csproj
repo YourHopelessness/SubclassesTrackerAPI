@@ -34,9 +34,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="**/*.graphql" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="Lines\skillTree.db">
+    <None Include="Lines\skillTree.db">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </None>
+    <None Include="**/*.graphql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
     </None>
   </ItemGroup>
 
