@@ -26,6 +26,6 @@ namespace SubclassesTracker.Database.Entity
         /// <summary>
         /// Collection of skill lines associated with this line type.
         /// </summary>
-        public ICollection<SkillLine> SkillLines { get; set; } = new HashSet<SkillLine>();
+        public ICollection<SkillLine> SkillLines { get; set; } = null!;
     }
 }

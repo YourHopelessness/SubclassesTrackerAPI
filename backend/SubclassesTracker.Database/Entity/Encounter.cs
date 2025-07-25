@@ -40,14 +40,14 @@ namespace SubclassesTracker.Database.Entity
         /// Indicates whether the encounter is a last boss fight.
         /// </summary>
         [Column("lastBoss")]
-        public bool LastBoss { get; set; }
+        public bool? LastBoss { get; set; }
 
         /// <summary>
         /// Identifier for the zone where the encounter takes place.
         /// </summary>
         [Column("zoneId")]
-        public int? ZoneId { get; set; }
-        public Zone? Zone { get; set; }
+        public int ZoneId { get; set; }
+        public Zone Zone { get; set; } = null!;
     }
 
 }

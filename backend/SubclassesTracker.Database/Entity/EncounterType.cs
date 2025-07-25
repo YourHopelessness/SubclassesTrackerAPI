@@ -26,11 +26,11 @@ namespace SubclassesTracker.Database.Entity
         /// <summary>
         /// Collection of zones associated with this encounter type.
         /// </summary>
-        public ICollection<Zone> Zones { get; set; } = new HashSet<Zone>();
+        public ICollection<Zone> Zones { get; set; } = null!;
 
         /// <summary>
         /// Collection of encounters associated with this encounter type.
         /// </summary>
-        public ICollection<Encounter> Encounters { get; set; } = new HashSet<Encounter>();
+        public ICollection<Encounter> Encounters { get; set; } = null!;
     }
 }

@@ -33,11 +33,11 @@ namespace SubclassesTracker.Database.Entity
         /// <summary>
         /// Collection of zone difficulties associated with this zone.
         /// </summary>
-        public ICollection<ZoneDifficulty> ZoneDifficulties { get; set; } = new HashSet<ZoneDifficulty>();
+        public ICollection<ZoneDifficulty> ZoneDifficulties { get; set; } = null!;
 
         /// <summary>
         /// Collection of encounters associated with this zone.
         /// </summary>
-        public ICollection<Encounter> Encounters { get; set; } = new HashSet<Encounter>();
+        public ICollection<Encounter> Encounters { get; set; } = null!;
     }
 }

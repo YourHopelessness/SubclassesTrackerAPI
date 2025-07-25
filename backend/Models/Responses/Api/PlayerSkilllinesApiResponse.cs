@@ -15,11 +15,17 @@ namespace SubclassesTracker.Api.Models.Responses.Api
         /// Player's ESO id
         /// </summary>
         public string PlayerEsoId { get; set; } = null!;
+
+        /// <summary>
+        /// Base class of the player
+        /// </summary>
+        public string BaseClass { get; set; } = null!;
+
         /// <summary>
         /// Player's lines
         /// </summary>
         public List<PlayerSkillLine> PlayerSkillLines { get; set; } = [];
     }
 
-    public record PlayerSkillLine(string LineName, string LineIcon);
+    public record PlayerSkillLine(string LineName, string LineIcon, string ClassName);
 }

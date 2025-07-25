@@ -12,5 +12,6 @@ namespace SubclassesTracker.Api.Models.Dto
         string Role,
         int TrialId,
         string TrialName,
-        List<Talent> Talents);
+        List<Talent> Talents,
+        string BaseClass);
 }
