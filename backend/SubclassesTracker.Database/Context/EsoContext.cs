@@ -49,6 +49,11 @@ namespace SubclassesTracker.Database.Context
                 .WithMany(lt => lt.SkillLines)
                 .HasForeignKey(sl => sl.LineTypeId);
 
+            b.Entity<SkillLine>()
+                .HasOne(sl => sl.Class)
+                .WithMany(lt => lt.SkillLines)
+                .HasForeignKey(sl => sl.ClassTypeId);
+
             b.Entity<SkillTreeEntry>()
                 .HasOne(st => st.SkillLine)
                 .WithMany(sl => sl.SkillTreeEntries)

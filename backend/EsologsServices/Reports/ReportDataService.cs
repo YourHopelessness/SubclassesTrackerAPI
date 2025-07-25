@@ -41,9 +41,8 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
         IBaseRepository<SkillTreeEntry> skillsRepository,
         IBaseRepository<Encounter> encounterRepository) : IReportDataService
     {
-        private sealed record PlayerKey(string Name, string TrialName, string Display, string Spec);
         private Dictionary<int, SkillInfo> skillsDict = null!;
-        private sealed record SkillInfo(string SkillName, string SkillLine, string SkillType, string? UrlIcon);
+        private sealed record SkillInfo(string SkillName, string SkillLine, string SkillType, string? UrlIcon, string? ClassName);
 
         public async Task<List<SkillLineReportEsologsResponse>> GetSkillLinesAsync(
                 int zoneId,
@@ -136,15 +135,18 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                         .Where(t => skillsDict.ContainsKey(t.Id))
                         .Select(t => new PlayerSkillLine(
                             skillsDict[t.Id].SkillLine,
-                            skillsDict[t.Id]?.UrlIcon ?? string.Empty))
+                            skillsDict[t.Id]?.UrlIcon ?? string.Empty,
+                            skillsDict[t.Id]?.ClassName ?? string.Empty))
                         .DistinctBy(t => t.LineName)
+                        .OrderBy(t => t.ClassName)
                         .ToList();
 
                     return new PlayerSkilllinesApiResponse
                     {
                         PlayerCharacterName = GetPlayerCharacterName(sample.PlayerId, playersByLog[sample.LogId]),
                         PlayerEsoId = GetPlayerEsoId(sample.PlayerId, playersByLog[sample.LogId]),
-                        PlayerSkillLines = allTalents
+                        BaseClass = sample.BaseClass,
+                        PlayerSkillLines = [.. allTalents.OrderByDescending(t => t.ClassName == sample.BaseClass)]
                     };
                 })
                 .ToList();
