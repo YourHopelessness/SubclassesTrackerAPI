@@ -26,6 +26,6 @@ namespace SubclassesTracker.Database.Entity
         /// <summary>
         /// Collection of zone difficulties associated with this difficulty level.
         /// </summary>
-        public ICollection<ZoneDifficulty> ZoneDifficulties { get; set; } = new HashSet<ZoneDifficulty>();
+        public ICollection<ZoneDifficulty> ZoneDifficulties { get; set; } = null!;
     }
 }

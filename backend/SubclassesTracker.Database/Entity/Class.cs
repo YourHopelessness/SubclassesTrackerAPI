@@ -3,27 +3,30 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SubclassesTracker.Database.Entity
 {
-    /// <summary>
-    /// Represents icons of the skills
-    /// </summary>
-    [Table("icon")]
-    public class Icon
+    [Table("class")]
+    public class Class
     {
         /// <summary>
-        /// Unique identifier
+        /// Class identifier.
         /// </summary>
         [Key]
         [Column("id")]
         public int Id { get; set; }
 
         /// <summary>
-        /// Url 
+        /// Class name.
         /// </summary>
-        [Column("url")]
-        public string Url { get; set; } = null!;
+        [Column("name")]
+        public string Name { get; set; } = null!;
 
         /// <summary>
-        /// Collection of skill lines
+        /// Class short names, separated by commas.
+        /// </summary>
+        [Column("shortName")]
+        public string? ShortName { get; set; }
+
+        /// <summary>
+        /// Collection of skill lines associated with this line type.
         /// </summary>
         public ICollection<SkillLine> SkillLines { get; set; } = null!;
     }

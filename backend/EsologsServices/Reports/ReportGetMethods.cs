@@ -14,14 +14,15 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                 .GetList(x => x.SkillLine.LineType.Name == "Class")
                 .Include(x => x.SkillLine)
                 .Include(x => x.SkillLine.Icon)
-                .Where(x => x.AbilityId != null)
+                .Include(x => x.SkillLine.Class)
                 .ToDictionaryAsync(
-                    k => k.AbilityId!.Value,
+                    k => k.AbilityId!,
                     v => new SkillInfo(
                         v.SkillName, 
                         v.SkillLine.Name, 
                         v.SkillType, 
-                        v.SkillLine?.Icon?.Url ?? null),
+                        v.SkillLine?.Icon?.Url ?? null,
+                        v.SkillLine?.Class?.Name ?? null),
                     token);
         }
 
@@ -133,7 +134,7 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
             Dictionary<string, PlayerListResponse> playersByLog,
             bool filterNeeded = true)
         {
-            var raw = new List<(GroupKey Key, int PlayerId, string LogId, int FightId, int FightScore, List<Talent> Talents)>();
+            var raw = new List<(GroupKey Key, int PlayerId, string LogId, int FightId, int FightScore, List<Talent> Talents, string BaseClass)>();
 
             foreach (var report in filteredReports)
             {
@@ -157,6 +158,7 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                     foreach (var p in rolePlayers)
                     {
                         var specKey = string.Join('|', p.Specs?.OrderBy(s => s) ?? Enumerable.Empty<string>());
+                        var baseClass = p.BaseClass ?? "Unknown";
                         var talents = p.CombatInfo?.Talents?
                             .Select(t => new Talent(t.Id, t.Name))
                             .ToList() ?? [];
@@ -169,7 +171,7 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                             specKey,
                             role);
 
-                        raw.Add((key, p.Id, rep.LogId, fight.Id, fight.TrialScore ?? 0, talents));
+                        raw.Add((key, p.Id, rep.LogId, fight.Id, fight.TrialScore ?? 0, talents, baseClass));
                     }
                 }
             }
@@ -186,7 +188,8 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                     x.Key.Role.ToString(),
                     x.Key.TrialId,
                     x.Key.TrialName,
-                    x.Talents))
+                    x.Talents,
+                    x.BaseClass))
                 .ToList();
 
             return best;
