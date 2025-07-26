@@ -20,7 +20,9 @@ cd backend
 
 Alternatively, skip this step and use the API instance already running on the remote host.
 
-3. **You need to create your own OAuth client [here](https://www.esologs.com/api/clients)**. The client id is required by the extension. When creating the client check the *PKCE* option and add `https://mpldcmnhbilholjaopjhcjfhcimgehjf.chromiumapp.org/` as a redirect URL.
+3. ***(Important step !!)*** **You need to create your own OAuth client [here](https://www.esologs.com/api/clients)**. The client id is required by the extension. When creating the client check the *PKCE* option and add `https://mpldcmnhbilholjaopjhcjfhcimgehjf.chromiumapp.org/` as a redirect URL.
+<img width="1058" height="485" alt="image" src="https://github.com/user-attachments/assets/d047e2cb-22e9-4192-9d0f-d161568d7821" />
+
 4. Download the latest browser extension from the [releases page](https://github.com/YourHopelessness/SubclassesTrackerAPI/releases).
 
 ## Loading the extension unpacked
