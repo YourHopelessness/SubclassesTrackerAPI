@@ -1,4 +1,4 @@
-﻿using static SubclassesTracker.Api.EsologsServices.Reports.ReportDataService;
+﻿using static SubclassesTracker.Api.EsologsServices.Reports.ReportSubclassesDataService;
 
 namespace SubclassesTracker.Api.Models.Dto
 {

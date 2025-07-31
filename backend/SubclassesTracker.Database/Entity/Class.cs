@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace SubclassesTracker.Database.Entity
 {
     [Table("class")]
-    public class Class
+    public class Class : IHaveIdentifier
     {
         /// <summary>
         /// Class identifier.

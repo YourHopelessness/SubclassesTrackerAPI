@@ -7,7 +7,7 @@ namespace SubclassesTracker.Database.Entity
     /// Represents a zone in the game, which can contain multiple encounters and difficulties.
     /// </summary>
     [Table("zone")]
-    public class Zone
+    public class Zone : IHaveIdentifier
     {
         /// <summary>
         /// Unique identifier for the zone.

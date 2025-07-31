@@ -7,7 +7,7 @@ namespace SubclassesTracker.Database.Entity
     /// Represents a type of encounter in the game, categorizing encounters into different types such as Trials or Dungeons.
     /// </summary>
     [Table("type")]
-    public class EncounterType
+    public class EncounterType : IHaveIdentifier
     {
         /// <summary>
         /// Unique identifier for the encounter type.

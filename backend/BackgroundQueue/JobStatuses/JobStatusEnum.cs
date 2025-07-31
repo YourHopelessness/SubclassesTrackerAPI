@@ -9,6 +9,7 @@
         Running,
         Succeeded,
         SucceededWithErrors,
-        Failed
+        Failed,
+        Cancelled
     }
 }

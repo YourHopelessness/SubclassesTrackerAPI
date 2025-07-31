@@ -7,7 +7,7 @@ namespace SubclassesTracker.Database.Entity
     /// Represents icons of the skills
     /// </summary>
     [Table("icon")]
-    public class Icon
+    public class Icon : IHaveIdentifier
     {
         /// <summary>
         /// Unique identifier

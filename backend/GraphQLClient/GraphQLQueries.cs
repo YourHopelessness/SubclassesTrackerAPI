@@ -11,7 +11,8 @@ namespace SubclassesTracker.Api.GraphQLClient
         GetFights,
         GetAllEncounters,
         GetReportsWithFights,
-        GetBuffs
+        GetBuffs,
+        GetBuffsEvents
     }
     public static class GraphQLQueries
     {
@@ -26,6 +27,7 @@ namespace SubclassesTracker.Api.GraphQLClient
                 { GraphQlQueryEnum.GetAllEncounters, "data.worldData.zones" },
                 { GraphQlQueryEnum.GetReportsWithFights, "data.reportData.reports" },
                 { GraphQlQueryEnum.GetBuffs, "data.reportData.report.table.data.auras" },
+                { GraphQlQueryEnum.GetBuffsEvents, "data.reportData.report" }
             };
 
         /// <summary>
@@ -53,7 +55,7 @@ namespace SubclassesTracker.Api.GraphQLClient
         /// </summary>
         /// <param name="Code">The unique code identifying the context or session for the request. Cannot be null or empty.</param>
         /// <param name="PlayerId">The identifier of the player for whom buffs are being retrieved.</param>
-        /// <param name="FightsIds">A list of fight identifiers for which buffs are being retrieved. Cannot be null.</param>
+        /// <param name="FightIds">A list of fight identifiers for which buffs are being retrieved. Cannot be null.</param>
         public sealed record GetBuffsVars(string Code, int PlayerId, int[] FightIds);
 
         /// <summary>
@@ -71,7 +73,7 @@ namespace SubclassesTracker.Api.GraphQLClient
         /// <param name="UseScoreCense">A flag indicating whether to use score cense in the report retrieval process. Defaults to <see
         /// langword="false"/>.</param>
         public sealed record GetReportsWithFightsVars(
-            int ZoneId,
+            int ZoneID,
             long StartTime,
             long EndTime,
             int Page,
@@ -79,6 +81,13 @@ namespace SubclassesTracker.Api.GraphQLClient
             int Limit = 100,
             int Difficulty = 122,
             bool UseScoreCense = false);
+
+        /// <summary>
+        /// Represents the input parameters required to retrieve events buffs for specific fights
+        /// </summary>
+        /// <param name="Code">The unique code identifying the context or session for the request. Cannot be null or empty.</param>
+        /// <param name="FightIds">A list of fight identifiers for which buffs are being retrieved. Cannot be null.</param>
+        public sealed record GetBuffsEventsVars(string Code, int[] FightIds);
 
     }
 }

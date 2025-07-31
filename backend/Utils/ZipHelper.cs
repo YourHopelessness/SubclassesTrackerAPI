@@ -8,7 +8,7 @@ namespace SubclassesTracker.Api.Utils
     {
         private const long BUFFER_SIZE = 4096;
 
-        public static byte[] GenerateDataCollectionZipArchive(DataCollectionResultApiResponse dataCollectionResult)
+        public static byte[] GenerateDataCollectionZipArchive(SubclassesDataCollectionApiResponse dataCollectionResult)
         {
             byte[] all_stats = dataCollectionResult.LinesStats;
             byte[] stats_with_score = dataCollectionResult.LinesStatsWithScore;

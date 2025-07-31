@@ -7,7 +7,7 @@ namespace SubclassesTracker.Database.Entity
     /// Represents a skill line in the game, which groups related abilities and skills.
     /// </summary>
     [Table("skillLine")]
-    public class SkillLine
+    public class SkillLine : IHaveIdentifier
     {
         /// <summary>
         /// Unique identifier for the skill line.

@@ -9,5 +9,9 @@
         /// Collect all subclasses data
         /// </summary>
         CollectDataForClassLines,
+        /// <summary>
+        /// Collect races usage data
+        /// </summary>
+        CollecctDataForRaces
     }
 }

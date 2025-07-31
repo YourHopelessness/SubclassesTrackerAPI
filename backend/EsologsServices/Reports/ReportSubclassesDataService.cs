@@ -2,12 +2,10 @@
 using SubclassesTracker.Api.Models.Enums;
 using SubclassesTracker.Api.Models.Responses.Api;
 using SubclassesTracker.Api.Models.Responses.Esologs;
-using SubclassesTracker.Database.Entity;
-using SubclassesTracker.Database.Repository;
 
 namespace SubclassesTracker.Api.EsologsServices.Reports
 {
-    public interface IReportDataService
+    public interface IReportSubclassesDataService
     {
         /// <summary>
         /// Retrieves skill lines for a specific zone (trial) based on the provided zone ID.
@@ -36,13 +34,12 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
             int? wipes = null,
             CancellationToken token = default);
     }
-    public partial class ReportDataService(
-        IGetDataService dataService,
-        IBaseRepository<SkillTreeEntry> skillsRepository,
-        IBaseRepository<Encounter> encounterRepository) : IReportDataService
+    public partial class ReportSubclassesDataService(
+        IGraphQLGetService dataService,
+        ILoaderService loaderService,
+        IReportService reportService) : IReportSubclassesDataService
     {
         private Dictionary<int, SkillInfo> skillsDict = null!;
-        private sealed record SkillInfo(string SkillName, string SkillLine, string SkillType, string? UrlIcon, string? ClassName);
 
         public async Task<List<SkillLineReportEsologsResponse>> GetSkillLinesAsync(
                 int zoneId,
@@ -50,23 +47,13 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                 bool useScoreCense = false,
                 CancellationToken token = default)
         {
-            skillsDict ??= await LoadSkillsAsync(token);
+            skillsDict ??= await loaderService.LoadSkillsAsync(token);
 
-            // Get zones and fight paralelly
-            var reportsTask = dataService.GetAllReportsAndFightsAsync(zoneId, difficulty, token);
-            var zonesTask = LoadTrialZonesAsync(token);
-
-            await Task.WhenAll(reportsTask, zonesTask);
-
-            var reports = reportsTask.Result;
-            var zones = zonesTask.Result;
-
-            var filteredReports = FilterReports(reports, zones, useScoreCense);
-
+            var filteredReports = await reportService.GetAllFilteredReportAsync(zoneId, difficulty, useScoreCense, token);
             if (filteredReports.Count == 0)
                 return [];
 
-            var playersByLog = await LoadPlayersForReportsAsync(filteredReports, token);
+            var playersByLog = await loaderService.LoadPlayersForReportsAsync(filteredReports, token);
 
             var playerRows = BuildDistinctBestFightRows(filteredReports, playersByLog);
 
@@ -106,7 +93,7 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
             int? wipes = null,
             CancellationToken token = default)
         {
-            skillsDict ??= await LoadSkillsAsync(token);
+            skillsDict ??= await loaderService.LoadSkillsAsync(token);
 
             var fightIdList = fightId?.Split('.').Select(int.Parse).ToList();
             var fights = await dataService.GetFigthsAsync(logId, token);
@@ -118,10 +105,10 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                     .Where(x => bossId == null || !(bossId > -1) || x.EncounterId == bossId)])
             };
 
-            var playersByLog = await LoadPlayersForReportsAsync(reports, token);
+            var playersByLog = await loaderService.LoadPlayersForReportsAsync(reports, token);
             var rows = BuildDistinctBestFightRows(reports, playersByLog, false);
 
-            await AddMissingBuffRowsAsync(rows, token);
+            await AddMissingBuffRowsAsync(rows, token); // Less than 3 lines
 
             // Grouping by player char name
             var result = rows

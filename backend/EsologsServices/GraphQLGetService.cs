@@ -9,50 +9,43 @@ using static SubclassesTracker.Api.GraphQLClient.GraphQLQueries;
 
 namespace SubclassesTracker.Api.EsologsServices
 {
-    public interface IGetDataService
+    public interface IGraphQLGetService
     {
         /// <summary>
         /// Retrieves the list of fights for a given log ID.
         /// </summary>
-        /// <param name="logId"></param>
-        /// <returns></returns>
         Task<List<FightEsologsResponse>> GetFigthsAsync(string logId, CancellationToken token = default);
 
         /// <summary>
         /// Retrieves the list of players for a given log ID and fight IDs.
         /// </summary>
-        /// <param name="logId"></param>
-        /// <param name="fightsIds"></param>
-        /// <returns></returns>
         Task<PlayerListResponse> GetPlayersAsync(string logId, List<int> fightsIds, CancellationToken token = default);
 
         /// <summary>
         /// Retrieves the buffs for a specific player in a given log and fight IDs.
         /// </summary>
-        /// <param name="logId"></param>
-        /// <param name="playerId"></param>
-        /// <param name="fightId"></param>
-        /// <returns></returns>
         Task<List<BuffEsologsResponse>> GetPlayerBuffsAsync(string logId, int playerId, List<int> fightId, CancellationToken token = default);
 
         /// <summary>
         /// Retrieves all reports and their associated fights for a specific zone and difficulty.
         /// </summary>
-        /// <param name="zoneId"></param>
-        /// <param name="difficulty"></param>
-        /// <returns></returns>
         Task<List<ReportEsologsResponse>> GetAllReportsAndFightsAsync(int zoneId = 1, int difficulty = 122, CancellationToken token = default);
 
         /// <summary>
         /// Retrieves all zones and their encounters from the ESO Logs API.
         /// </summary>
-        /// <returns></returns>
         Task<List<ZoneApiResponse>> GetAllZonesAndEncountersAsync(CancellationToken token = default);
+
+        /// <summary>
+        /// Retrieves all events buffs with combantant info
+        /// </summary>
+        Task<BuffsEventsWithPlayersEsologsResponse> GetBuffsEventsAsync(
+            string logId, List<int> fightId, CancellationToken token = default);
     }
-    public class GetDataService(
+    public class GraphQLGetService(
         IOptions<LinesConfig> options,
         IHttpClientFactory httpClientFactory,
-        ILogger<GetDataService> logger) : IGetDataService
+        ILogger<GraphQLGetService> logger) : IGraphQLGetService
     {
         private readonly QraphQlExecutor qlExecutor =
             new(options.Value.EsoLogsApiUrl, logger, httpClientFactory);
@@ -131,6 +124,15 @@ namespace SubclassesTracker.Api.EsologsServices
                 GraphQlQueryEnum.GetAllEncounters, new GetAllEncountersVars(), token: token);
 
             return zones;
+        }
+
+        public async Task<BuffsEventsWithPlayersEsologsResponse> GetBuffsEventsAsync(
+            string logId, List<int> fightId, CancellationToken token = default)
+        {
+            var buffAndEvents = await qlExecutor.QueryAsync<BuffsEventsWithPlayersEsologsResponse, GetBuffsEventsVars>(
+                GraphQlQueryEnum.GetBuffsEvents, new GetBuffsEventsVars(logId, [.. fightId]), token);
+
+            return buffAndEvents;
         }
     }
 }

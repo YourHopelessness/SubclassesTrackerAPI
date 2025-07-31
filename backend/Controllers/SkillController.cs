@@ -6,8 +6,8 @@ namespace SubclassesTracker.Api.Controllers
 {
     [Route("api/[controller]")]
     public class SkillController(
-        IGetDataService getDataService,
-        IReportDataService reportDataService) : ControllerBase
+        IGraphQLGetService getDataService,
+        IReportSubclassesDataService reportDataService) : ControllerBase
     {
         /// <summary>
         /// Retrieves fights for a specific log ID.

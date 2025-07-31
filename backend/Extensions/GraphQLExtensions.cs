@@ -5,6 +5,7 @@ using SubclassesTracker.Api.EsologsServices;
 using SubclassesTracker.Api.GraphQLClient;
 using SubclassesTracker.Api.Models.Dto;
 using System.Collections;
+using System.Net.Http.Headers;
 using System.Text;
 using static SubclassesTracker.Api.GraphQLClient.GraphQLQueries;
 
@@ -51,7 +52,7 @@ namespace SubclassesTracker.Api.Extensions
                 where TResult : class, new()
                 where TVars : class
         {
-            var report = await CacheService.LoadReportsFromCacheAsync<TResult>(cacheName, logger);
+            var report = await CacheService.LoadReportsFromCacheAsync<TResult>(cacheName, logger, token);
             if (report == null || report is IList && (report as IList).Count == 0)
             {
                 try
@@ -79,6 +80,11 @@ namespace SubclassesTracker.Api.Extensions
                         response = await http.PostAsync(apiUrl, content, token);
                     }
                     var raw = await response.Content.ReadAsStringAsync(token);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new HttpRequestException("The response was not successful", null, response.StatusCode);
+                    }
 
                     var parsed = JsonConvert.DeserializeObject<JToken>(raw);
                     var entries = parsed?.SelectToken(resultJsonPath);

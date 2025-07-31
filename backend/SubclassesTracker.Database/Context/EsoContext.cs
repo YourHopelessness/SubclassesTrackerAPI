@@ -17,9 +17,6 @@ namespace SubclassesTracker.Database.Context
         protected override void OnModelCreating(ModelBuilder b)
         {
             b.Entity<ZoneDifficulty>()
-                .HasKey(zd => new { zd.ZoneId, zd.DifficultyId });
-
-            b.Entity<ZoneDifficulty>()
                 .HasOne(zd => zd.Zone)
                 .WithMany(z => z.ZoneDifficulties)
                 .HasForeignKey(zd => zd.ZoneId);

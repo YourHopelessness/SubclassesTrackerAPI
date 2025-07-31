@@ -6,7 +6,8 @@ on:
     tags:
       - 'backend-release-*'
 
-jobs:     
+jobs:  
+  # Build the app
   build:
     runs-on: ubuntu-latest
     defaults:
@@ -22,7 +23,8 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore SubclassesTrackerExtension.sln
-        
+  
+  # Make release build
   publish:
     needs: build
     runs-on: ubuntu-latest
@@ -45,7 +47,8 @@ jobs:
         with:
           name: SubclassesTracker.Api
           path: backend/publish
-          
+    
+  # Deploy to the server
   deploy:
     needs: publish
     runs-on: ubuntu-latest
@@ -84,3 +87,22 @@ jobs:
             set -e
             sudo systemctl start subclasses-api
             sudo systemctl status subclasses-api --no-pager
+
+      - name: Change ownership
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.YOKO_HOST }}
+          username: ${{ secrets.YOKO_USER }}
+          key: ${{ secrets.YOKO_KEY }}
+          script: |  
+            sudo chown -R ${{ secrets.YOKO_USER_API }}:${{ secrets.YOKO_USER_API }} ${{ secrets.YOKO_TARGET }}/publish
+      
+     # 3) Health check
+      - name: Check service status
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+            host: ${{ secrets.YOKO_HOST }}
+            username: ${{ secrets.YOKO_USER }}
+            key: ${{ secrets.YOKO_KEY }}
+            script: |
+                curl --fail --silent http://localhost/api/HealthCheck/health || exit 1

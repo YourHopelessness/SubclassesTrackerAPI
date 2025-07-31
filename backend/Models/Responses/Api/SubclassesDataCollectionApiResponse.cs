@@ -3,10 +3,10 @@
     /// <summary>
     /// Represents the result of data collection for skill lines in trials.
     /// </summary>
-    public sealed record DataCollectionResultApiResponse
+    public sealed record SubclassesDataCollectionApiResponse
     {
         /// <summary>
-        /// Unique identifier for the report.
+        /// Proccessed zones.
         /// </summary>
         public List<string> ZoneNames { get; set; } = [];
         /// <summary>

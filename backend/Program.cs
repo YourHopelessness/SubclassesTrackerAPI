@@ -1,9 +1,11 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 using SQLitePCL;
 using SubclassesTracker.Api;
 using SubclassesTracker.Api.BackgroundQueue;
 using SubclassesTracker.Api.BackgroundQueue.HostedService;
-using SubclassesTracker.Api.BackgroundQueue.Jobs;
+using SubclassesTracker.Api.BackgroundQueue.Jobs.Tasks;
 using SubclassesTracker.Api.BackgroundQueue.JobStatuses;
 using SubclassesTracker.Api.EsologsServices;
 using SubclassesTracker.Api.EsologsServices.Reports;
@@ -51,8 +53,15 @@ builder.Services.AddCors(opts =>
 });
 
 // Register services
-builder.Services.AddScoped<IGetDataService, GetDataService>();
-builder.Services.AddScoped<IReportDataService, ReportDataService>();
+builder.Services.AddScoped<IGraphQLGetService, GraphQLGetService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IReportSubclassesDataService, ReportSubclassesDataService>();
+builder.Services.AddScoped<IReportRacialDataService, ReportRacialDataService>();
+builder.Services.AddScoped<ILoaderService, LoaderService>();
+
+// Register the controller Validation
+builder.Services.AddValidatorsFromAssemblyContaining<RequiredZonesForSpecificJobTypesAttribute>();
+builder.Services.AddFluentValidationAutoValidation();
 
 // Register token validator
 builder.Services.AddHttpContextAccessor();
@@ -75,7 +84,8 @@ builder.Services.AddHostedService<QueuedHostedService>();
 builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
 builder.Services.AddSingleton<IJobMonitor, JobMonitor>();
 // Register the job
-builder.Services.AddScoped<JobDataCollection>();
+builder.Services.AddScoped<JobSubclassesDataCollection>();
+builder.Services.AddScoped<JobRacesDataCollection>();
 
 // Add controllers
 builder.Services.AddControllers();

@@ -1,4 +1,5 @@
 ﻿using SubclassesTracker.Api.BackgroundQueue.Jobs;
+using SubclassesTracker.Api.BackgroundQueue.Jobs.JobParameters;
 
 namespace SubclassesTracker.Api.BackgroundQueue
 {
@@ -21,9 +22,10 @@ namespace SubclassesTracker.Api.BackgroundQueue
         /// <param name="work">task</param>
         /// <param name="id">job Id</param>
         /// <returns></returns>
-        JobHandle<TResult> Enqueue<TResult>(
+        JobHandle<TResult> Enqueue<TResult, TParams>(
                 Func<IServiceProvider, CancellationToken, Task<TResult>> work,
-                Guid? id);
+                TParams jobParametrs)
+            where TParams : BaseParams;
 
         /// <summary>
         /// Enqueue a job that returns a result
@@ -32,8 +34,9 @@ namespace SubclassesTracker.Api.BackgroundQueue
         /// <typeparam name="TResult"></typeparam>
         /// <param name="id">job Id</param>
         /// <returns></returns>
-        JobHandle<TResult> Enqueue<TJob, TResult>(Guid ids)
-            where TJob : IJob<TResult>;
+        JobHandle<TResult> Enqueue<TJob, TResult, TParams>(TParams jobParametrs)
+            where TParams : BaseParams
+            where TJob : IJob<TResult, TParams>;
 
         /// <summary>
         /// Remove from the queue
@@ -42,8 +45,7 @@ namespace SubclassesTracker.Api.BackgroundQueue
         /// <returns></returns>
         ValueTask<(
          Guid, 
-         Func<IServiceProvider, 
-         CancellationToken, Task>, 
+         Func<IServiceProvider, Task>, 
          TaskCompletionSource<object?>)> 
             Dequeue(CancellationToken ct);
     }

@@ -1,9 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DocumentFormat.OpenXml.Office2010.Excel;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using SubclassesTracker.Api.BackgroundQueue;
 using SubclassesTracker.Api.BackgroundQueue.Jobs;
+using SubclassesTracker.Api.BackgroundQueue.Jobs.JobParameters;
+using SubclassesTracker.Api.BackgroundQueue.Jobs.Tasks;
 using SubclassesTracker.Api.BackgroundQueue.JobStatuses;
+using SubclassesTracker.Api.Extensions;
+using SubclassesTracker.Api.Models.Requests.Api;
 using SubclassesTracker.Api.Models.Responses.Api;
 using SubclassesTracker.Api.Utils;
+using System.ComponentModel.DataAnnotations;
 
 namespace SubclassesTracker.Api.Controllers
 {
@@ -40,12 +47,16 @@ namespace SubclassesTracker.Api.Controllers
             return jobinfo.State switch
             {
                 JobStatusEnum.Succeeded or JobStatusEnum.SucceededWithErrors 
-                    => jobinfo.ResultObj is DataCollectionResultApiResponse ? 
-                       File(ZipHelper.GenerateDataCollectionZipArchive(
-                                        (DataCollectionResultApiResponse)jobinfo.ResultObj),
-                            "application/zip",
-                            $"stats_{DateTime.UtcNow}.zip")
-                       : Ok(jobinfo.ResultObj),
+                    => jobinfo.ResultObj is SubclassesDataCollectionApiResponse response ? 
+                           File(ZipHelper.GenerateDataCollectionZipArchive(
+                                response),
+                                "application/zip",
+                                $"subclasses_stats_{DateTime.UtcNow}.zip") :
+                       jobinfo.ResultObj is RacialDataCollectionApiResponse racesResponse ?
+                           File(racesResponse.RacesData,
+                                "application/octet-stream",
+                                $"races_stats_{DateTime.UtcNow}.xlsx") :
+                       Ok(jobinfo.ResultObj),
                 JobStatusEnum.Failed => Problem(detail: jobinfo.Error?.Message),
                 _ => Accepted(jobinfo)
             };
@@ -69,22 +80,62 @@ namespace SubclassesTracker.Api.Controllers
         /// <summary>
         /// Creates a new job based on the specified job name.
         /// </summary>
-        /// <param name="jobType">Job type</param>
+        /// <param name="createNewJobModel">job model</param>
         /// <returns>Id of the job</returns>
         [HttpPost("create")]
-        public IActionResult CreateNewJob([FromQuery] JobsEnum jobType)
+        public IActionResult CreateNewJob([FromBody] CreateNewJobApiRequest createNewJobModel)
         {
             Guid guid = Guid.NewGuid();
-            switch (jobType)
+            var auth = BearerPropagationHandler.GetAuthFromContext(HttpContext);
+
+            switch (createNewJobModel.JobType)
             {
                 case JobsEnum.CollectDataForClassLines:
-                    queue.Enqueue<JobDataCollection, DataCollectionResultApiResponse>(guid);
+                    queue.Enqueue<JobSubclassesDataCollection, 
+                        SubclassesDataCollectionApiResponse, 
+                        EsologsParams>(new EsologsParams
+                    {
+                        JobId = guid,
+                        Token = auth,
+                        ZonesList = createNewJobModel.CollectedZoneIds
+                    });
+                    break;
+                case JobsEnum.CollecctDataForRaces:
+                    queue.Enqueue<JobRacesDataCollection, 
+                        RacialDataCollectionApiResponse, 
+                        EsologsParams>(new EsologsParams
+                    {
+                        JobId = guid,
+                        Token = auth,
+                        ZonesList = createNewJobModel.CollectedZoneIds
+                    });
                     break;
                 default:
                     return BadRequest("Invalid job type.");
             }
 
             return new CreatedResult() { Value = guid };
+        }
+
+        /// <summary>
+        /// Cancel the job
+        /// </summary>
+        /// <param name="jobType">Job type</param>
+        /// <returns>Id of the job</returns>
+        [HttpDelete("cancel")]
+        public IActionResult CancelJob([FromQuery] Guid jobId)
+        {
+            if (!monitor.TryGet(jobId, out var jobinfo))
+                return NotFound("Job with id not found");
+
+            if (jobinfo.State == JobStatusEnum.Running
+                || jobinfo.State == JobStatusEnum.Queued)
+            {
+                if (monitor.TryCancel(jobId, ref jobinfo))
+                    return Ok();
+            }
+
+            return BadRequest("Job is not running");
         }
     }
 }

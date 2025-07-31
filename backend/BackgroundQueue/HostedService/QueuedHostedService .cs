@@ -3,6 +3,9 @@
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
     using SubclassesTracker.Api.BackgroundQueue;
+    using SubclassesTracker.Api.BackgroundQueue.Jobs.JobParameters;
+    using SubclassesTracker.Api.BackgroundQueue.JobStatuses;
+    using SubclassesTracker.Api.Utils;
 
     public sealed class QueuedHostedService(
             IBackgroundTaskQueue queue,
@@ -23,8 +26,19 @@
                     {
                         // Create scope for the job
                         await using var scope = scopeFactory.CreateAsyncScope();
+
+                        var jobMonitor = scope.ServiceProvider.GetRequiredService<IJobMonitor>();
+
+                        if (jobMonitor.TryGet(id, out var info))
+                        {
+                            if (info is IJobInfo jobInfo && jobInfo.Parameters is EsologsParams baseParams)
+                            {
+                                TaskExecutionContext.AccessToken = baseParams.Token;
+                            }
+                        }
+
                         // Box the new job
-                        await work(scope.ServiceProvider, stoppingToken);
+                        await work(scope.ServiceProvider);
                     }
                     catch (Exception ex)
                     {

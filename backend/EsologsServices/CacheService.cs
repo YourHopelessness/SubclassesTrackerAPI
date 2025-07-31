@@ -24,6 +24,7 @@ namespace SubclassesTracker.Api.EsologsServices
 
             logger.LogInformation("Saving data to cache file: {FilePath}", filePath);
             var json = JsonConvert.SerializeObject(data, Formatting.Indented);
+
             await File.WriteAllTextAsync(filePath, json, token);
         }
 
@@ -34,8 +35,6 @@ namespace SubclassesTracker.Api.EsologsServices
         {
             if (!File.Exists(filePath))
             {
-                logger.LogWarning("Cache file {FilePath} does not exist.", filePath);
-
                 return default;
             }
 

@@ -7,7 +7,7 @@ namespace SubclassesTracker.Database.Entity
     /// Represents a type of skill line in the game, categorizing skill lines into different groups such as crafting or combat.
     /// </summary>
     [Table("lineType")]
-    public class LineType
+    public class LineType : IHaveIdentifier
     {
         /// <summary>
         /// Unique identifier for the line type.

@@ -1,41 +1,22 @@
-﻿using Microsoft.EntityFrameworkCore;
-using SubclassesTracker.Api.Models.Dto;
+﻿using SubclassesTracker.Api.Models.Dto;
 using SubclassesTracker.Api.Models.Enums;
 using SubclassesTracker.Api.Models.Responses.Api;
 using SubclassesTracker.Api.Models.Responses.Esologs;
 
 namespace SubclassesTracker.Api.EsologsServices.Reports
 {
-    public partial class ReportDataService
+    public partial class ReportSubclassesDataService
     {
-        private async Task<Dictionary<int, SkillInfo>> LoadSkillsAsync(CancellationToken token)
-        {
-            return await skillsRepository
-                .GetList(x => x.SkillLine.LineType.Name == "Class")
-                .Include(x => x.SkillLine)
-                .Include(x => x.SkillLine.Icon)
-                .Include(x => x.SkillLine.Class)
-                .ToDictionaryAsync(
-                    k => k.AbilityId!,
-                    v => new SkillInfo(
-                        v.SkillName, 
-                        v.SkillLine.Name, 
-                        v.SkillType, 
-                        v.SkillLine?.Icon?.Url ?? null,
-                        v.SkillLine?.Class?.Name ?? null),
-                    token);
-        }
-
         private async Task<List<PlayerRow>> GetBuffsAsync(
-            List<PlayerRow> needBuffs, 
+            List<PlayerRow> needBuffs,
             CancellationToken token)
         {
             foreach (var row in needBuffs)
             {
                 var buffs = await dataService.GetPlayerBuffsAsync(
-                    row.LogId, 
+                    row.LogId,
                     row.PlayerId,
-                    row.FightIds, 
+                    row.FightIds,
                     token);
 
                 var extra = buffs
@@ -49,83 +30,6 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
             return needBuffs;
         }
 
-        private async Task<List<ZoneApiResponse>> LoadTrialZonesAsync(CancellationToken token)
-        {
-            return await encounterRepository
-                .GetList(x => x.Zone.Type.Name == "Trial")
-                .Select(x => new ZoneApiResponse
-                {
-                    Id = x.Zone.Id,
-                    Name = x.Zone.Name,
-                    Encounters = x.Zone.Encounters
-                        .Where(e => e.Type.Name == "Trial")
-                        .Select(e => new EncounterApiResponse
-                        {
-                            Id = e.Id,
-                            Name = e.Name,
-                            ScoreCense = e.ScoreCense ?? 0
-                        }).ToList()
-                })
-                .ToListAsync(token);
-        }
-
-        /// <summary>
-        /// Filter reports
-        /// </summary>
-        private static List<FilteredReport> FilterReports(
-            List<ReportEsologsResponse> reports,
-            List<ZoneApiResponse> zones,
-            bool useScoreCense)
-        {
-            var zoneDict = zones.ToDictionary(z => z.Id);
-
-            var filtered = new List<FilteredReport>();
-
-            foreach (var report in reports)
-            {
-                if (!zoneDict.TryGetValue(report.Zone.Id, out var zone))
-                    continue;
-
-                var fights = report.Fights
-                    .Where(f => f.TrialScore.HasValue)
-                    .Where(f =>
-                    {
-                        var enc = zone.Encounters.FirstOrDefault(e => e.Id == f.EncounterId);
-                        if (enc is null) return false;
-                        return !useScoreCense || f.TrialScore!.Value >= enc.ScoreCense;
-                    })
-                    .ToList();
-
-                if (fights.Count == 0)
-                    continue;
-
-                filtered.Add(new FilteredReport(report.Code, zone.Id, zone.Name, fights));
-            }
-
-            return filtered;
-        }
-
-        /// <summary>
-        /// Load players reports
-        /// </summary>
-        private async Task<Dictionary<string, PlayerListResponse>> LoadPlayersForReportsAsync(
-            List<FilteredReport> filteredReports,
-            CancellationToken token)
-        {
-            var tasks = filteredReports
-                .Select(async r =>
-                {
-                    var fightIds = r.Fights.Select(f => f.Id).ToList();
-                    var players = await dataService.GetPlayersAsync(r.LogId, fightIds, token);
-                    players.LogId = r.LogId;
-
-                    return players;
-                });
-
-            var results = await Task.WhenAll(tasks);
-            return results.ToDictionary(p => p.LogId, p => p);
-        }
-
         /// <summary>
         /// Get lines stats
         /// </summary>
@@ -134,6 +38,7 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
             Dictionary<string, PlayerListResponse> playersByLog,
             bool filterNeeded = true)
         {
+            // Collect all role-specific entries with their metadata
             var raw = new List<(GroupKey Key, int PlayerId, string LogId, int FightId, int FightScore, List<Talent> Talents, string BaseClass)>();
 
             foreach (var report in filteredReports)
@@ -147,6 +52,7 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                     AddRoleEntries(report, fight, players.Tanks, PlayerRole.Tank);
                 }
 
+                // Add role-specific player fight entries
                 void AddRoleEntries(
                     FilteredReport rep,
                     FightEsologsResponse fight,
@@ -176,21 +82,39 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                 }
             }
 
-            var best = raw
+            // Pick the best entry per (GroupKey) — best per Name+Role+Spec
+            var bestCandidates = raw
                 .GroupBy(r => r.Key)
                 .Select(g => g
                     .OrderByDescending(x => x.FightScore)
                     .First())
-                .Select(x => new PlayerRow(
-                    x.PlayerId,
-                    x.LogId,
-                    [x.FightId],
-                    x.Key.Role.ToString(),
-                    x.Key.TrialId,
-                    x.Key.TrialName,
-                    x.Talents,
-                    x.BaseClass))
                 .ToList();
+
+            // Now deduplicate by (CharacterName, Role)
+            var seenNameRolePairs = new HashSet<(string Name, PlayerRole Role)>();
+
+            var best = new List<PlayerRow>();
+
+            foreach (var entry in bestCandidates)
+            {
+                var key = (entry.Key.PlayerName, entry.Key.Role);
+
+                if (seenNameRolePairs.Contains(key) 
+                    && !entry.Key.PlayerName.Equals("nil", StringComparison.InvariantCultureIgnoreCase))
+                    continue;
+
+                seenNameRolePairs.Add(key);
+
+                best.Add(new PlayerRow(
+                    entry.PlayerId,
+                    entry.LogId,
+                    [entry.FightId],
+                    entry.Key.Role.ToString(),
+                    entry.Key.TrialId,
+                    entry.Key.TrialName,
+                    entry.Talents,
+                    entry.BaseClass));
+            }
 
             return best;
         }
@@ -290,10 +214,12 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
 
         private static string GetPlayerEsoId(int playerId, PlayerListResponse list)
         {
-            return list.Dps?.FirstOrDefault(p => p.Id == playerId)?.PlayerEsoId
+            var esoId = list.Dps?.FirstOrDefault(p => p.Id == playerId)?.PlayerEsoId
                 ?? list.Healers?.FirstOrDefault(p => p.Id == playerId)?.PlayerEsoId
                 ?? list.Tanks?.FirstOrDefault(p => p.Id == playerId)?.PlayerEsoId
-                ?? string.Empty;
+                ?? "Anonymous";
+
+            return esoId.Equals("nil", StringComparison.CurrentCultureIgnoreCase) ? "Anonymous" : esoId;
         }
     }
 }

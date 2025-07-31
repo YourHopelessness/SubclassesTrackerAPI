@@ -7,7 +7,7 @@ namespace SubclassesTracker.Database.Entity
     /// Represents an encounter in the game, such as a boss fight or a dungeon run.
     /// </summary>
     [Table("encounter")]
-    public class Encounter
+    public class Encounter : IHaveIdentifier
     {
         /// <summary>
         /// Unique identifier for the encounter.

@@ -4,9 +4,9 @@ using SubclassesTracker.Api.Models.Responses.Esologs;
 
 namespace SubclassesTracker.Api.ExcelServices
 {
-    public class ExcelParserService
+    public partial class ExcelExporterService
     {
-        public static byte[] ExportToExcel(
+        public static byte[] ExportSubclassesDataToExcel(
             IEnumerable<SkillLineReportEsologsResponse> data)
         {
             XLWorkbook wb = new();
