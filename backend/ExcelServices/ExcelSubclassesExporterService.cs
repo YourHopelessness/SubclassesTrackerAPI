@@ -9,7 +9,7 @@ namespace SubclassesTracker.Api.ExcelServices
         public static byte[] ExportSubclassesDataToExcel(
             IEnumerable<SkillLineReportEsologsResponse> data)
         {
-            XLWorkbook wb = new();
+            using var wb = new XLWorkbook();
 
             foreach (var trial in data)
             {

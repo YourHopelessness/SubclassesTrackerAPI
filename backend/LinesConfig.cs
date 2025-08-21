@@ -5,9 +5,6 @@
     /// </summary>
     public class LinesConfig
     {
-        /// <summary> The time slice for the trial start time. </summary>
-        public long TrialStartTimeSlice { get; set; }
-
         /// <summary> The URL for the ESO Logs API. </summary>
         public string EsoLogsApiUrl { get; set; } = string.Empty;
 

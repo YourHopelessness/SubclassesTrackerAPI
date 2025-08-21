@@ -7,7 +7,7 @@ namespace SubclassesTracker.Api.ExcelServices
     {
         public static byte[] ExportRacesDataToExcel(List<RacialReportApiResponse> racialReports)
         {
-            XLWorkbook wb = new();
+            using var wb = new XLWorkbook();
 
             foreach (var trial in racialReports)
             {

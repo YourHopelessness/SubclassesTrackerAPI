@@ -16,6 +16,8 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
         Task<List<FilteredReport>> GetAllFilteredReportAsync(
             int zoneId,
             int difficulty,
+            long startTime,
+            long endTime,
             bool useScoreCense = false,
             CancellationToken token = default);
     }
@@ -65,11 +67,13 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
         public async Task<List<FilteredReport>> GetAllFilteredReportAsync(
             int zoneId,
             int difficulty,
+            long startTime,
+            long endTime,
             bool useScoreCense = false,
             CancellationToken token = default)
         {
             // Get zones and fight paralelly
-            var reportsTask = dataService.GetAllReportsAndFightsAsync(zoneId, difficulty, token);
+            var reportsTask = dataService.GetAllReportsAndFightsAsync(zoneId, difficulty, startTime, endTime, token);
             var zonesTask = loaderService.LoadTrialZonesAsync(token);
 
             await Task.WhenAll(reportsTask, zonesTask);

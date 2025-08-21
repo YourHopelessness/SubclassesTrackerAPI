@@ -12,6 +12,8 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
         Task<RacialReportApiResponse> GetRacesDataAsync(
             int zoneId,
             int difficulty,
+            long startTime = 0,
+            long endTime = 0,
             CancellationToken token = default);
     }
 
@@ -26,11 +28,13 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
         public async Task<RacialReportApiResponse> GetRacesDataAsync(
             int zoneId,
             int difficulty,
+            long startTime = 0,
+            long endTime = 0,
             CancellationToken token = default)
         {
             racialSkillsDict ??= await loaderService.LoadRacialPassivesAsync(token);
 
-            var filteredReports = await reportService.GetAllFilteredReportAsync(zoneId, difficulty, token: token);
+            var filteredReports = await reportService.GetAllFilteredReportAsync(zoneId, difficulty, startTime: startTime, endTime: endTime, token: token);
 
             var playerMaxScore = new Dictionary<string, int>();
 

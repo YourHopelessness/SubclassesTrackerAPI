@@ -21,6 +21,14 @@ namespace SubclassesTracker.Api.Middleware
                           RuleFor(x => x.CollectedZoneIds)
                           .Must(BeValidZones)
                           .WithMessage("One or more zone IDs are invalid");
+
+                          RuleFor(x => x.StartSliceTime)
+                          .Must(start => start != null && start >= new DateTime(2025, 06, 02))
+                          .WithMessage("You must specify the start date of log collection");
+
+                          RuleFor(x => x.EndSliceTime)
+                          .Must(end => end != null && end >= new DateTime(2025, 06, 02))
+                          .WithMessage("You must specify the end date of log collection"); ;
                       });
         }
 

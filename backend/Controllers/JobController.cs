@@ -91,24 +91,27 @@ namespace SubclassesTracker.Api.Controllers
             switch (createNewJobModel.JobType)
             {
                 case JobsEnum.CollectDataForClassLines:
-                    queue.Enqueue<JobSubclassesDataCollection, 
-                        SubclassesDataCollectionApiResponse, 
-                        EsologsParams>(new EsologsParams
-                    {
-                        JobId = guid,
-                        Token = auth,
-                        ZonesList = createNewJobModel.CollectedZoneIds
-                    });
-                    break;
                 case JobsEnum.CollecctDataForRaces:
-                    queue.Enqueue<JobRacesDataCollection, 
-                        RacialDataCollectionApiResponse, 
-                        EsologsParams>(new EsologsParams
+                    var param = new EsologsParams
                     {
                         JobId = guid,
                         Token = auth,
+                        StartSliceTime = createNewJobModel.StartSliceTime?.ToUnix() ?? 0,
+                        EndSliceTime = createNewJobModel.EndSliceTime?.ToUnix() ?? 0,
                         ZonesList = createNewJobModel.CollectedZoneIds
-                    });
+                    };
+                    if (JobsEnum.CollectDataForClassLines == createNewJobModel.JobType)
+                    {
+                        queue.Enqueue<JobSubclassesDataCollection,
+                            SubclassesDataCollectionApiResponse,
+                            EsologsParams>(param);
+                    }
+                    else
+                    {
+                        queue.Enqueue<JobRacesDataCollection,
+                            RacialDataCollectionApiResponse,
+                            EsologsParams>(param);
+                    }
                     break;
                 default:
                     return BadRequest("Invalid job type.");

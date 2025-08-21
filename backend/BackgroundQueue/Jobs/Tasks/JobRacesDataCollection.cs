@@ -36,7 +36,12 @@ namespace SubclassesTracker.Api.BackgroundQueue.Jobs.Tasks
 
                     result.ZoneNames.Add(zone.Name);
 
-                    trialStats.AddRange(await reportRacialDataService.GetRacesDataAsync(zone.Id, difficulty?.DifficultyId ?? 0, token: ct));
+                    trialStats.AddRange(await reportRacialDataService.GetRacesDataAsync(
+                        zone.Id, 
+                        difficulty?.DifficultyId ?? 0,
+                        jobParameters.StartSliceTime,
+                        jobParameters.EndSliceTime,
+                        token: ct));
 
                     jobMonitor.TryUpdate(jobParameters.JobId, prev => ((JobInfo<RacialDataCollectionApiResponse, EsologsParams>)prev) with
                     {

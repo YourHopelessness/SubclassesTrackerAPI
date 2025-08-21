@@ -16,6 +16,8 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
         Task<List<SkillLineReportEsologsResponse>> GetSkillLinesAsync(
             int zoneId,
             int difficulty,
+            long startTime,
+            long endTime,
             bool useScoreCense = false,
             CancellationToken token = default);
 
@@ -44,12 +46,14 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
         public async Task<List<SkillLineReportEsologsResponse>> GetSkillLinesAsync(
                 int zoneId,
                 int difficulty,
+                long startTime,
+                long endTime,
                 bool useScoreCense = false,
                 CancellationToken token = default)
         {
             skillsDict ??= await loaderService.LoadSkillsAsync(token);
 
-            var filteredReports = await reportService.GetAllFilteredReportAsync(zoneId, difficulty, useScoreCense, token);
+            var filteredReports = await reportService.GetAllFilteredReportAsync(zoneId, difficulty, startTime, endTime, useScoreCense, token);
             if (filteredReports.Count == 0)
                 return [];
 

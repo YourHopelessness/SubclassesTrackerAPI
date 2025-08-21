@@ -11,11 +11,19 @@ namespace SubclassesTracker.Api.EsologsServices
            bool forceRefresh = false,
            CancellationToken token = default)
         {
-            if (!forceRefresh && File.Exists(filePath))
+            lock (filePath)
             {
-                logger.LogInformation("Cache file {FilePath} already exists, skipping save.", filePath);
+                if (token.IsCancellationRequested)
+                {
+                    logger.LogWarning("Operation cancelled while trying to save cache file: {FilePath}", filePath);
+                    return;
+                }
+                if (!forceRefresh && File.Exists(filePath))
+                {
+                    logger.LogInformation("Cache file {FilePath} already exists, skipping save.", filePath);
 
-                return;
+                    return;
+                }
             }
 
             var dir = Path.GetDirectoryName(filePath);
@@ -33,9 +41,12 @@ namespace SubclassesTracker.Api.EsologsServices
             ILogger logger,
             CancellationToken token = default) where T : new()
         {
-            if (!File.Exists(filePath))
+            lock (filePath)
             {
-                return default;
+                if (!File.Exists(filePath))
+                {
+                    return default;
+                }
             }
 
             logger.LogInformation("Loading data from cache file: {FilePath}", filePath);

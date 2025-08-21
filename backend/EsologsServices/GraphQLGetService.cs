@@ -29,7 +29,8 @@ namespace SubclassesTracker.Api.EsologsServices
         /// <summary>
         /// Retrieves all reports and their associated fights for a specific zone and difficulty.
         /// </summary>
-        Task<List<ReportEsologsResponse>> GetAllReportsAndFightsAsync(int zoneId = 1, int difficulty = 122, CancellationToken token = default);
+        Task<List<ReportEsologsResponse>> GetAllReportsAndFightsAsync(
+            int zoneId = 1, int difficulty = 122, long startTime = 0, long endTime = 0, CancellationToken token = default);
 
         /// <summary>
         /// Retrieves all zones and their encounters from the ESO Logs API.
@@ -76,15 +77,17 @@ namespace SubclassesTracker.Api.EsologsServices
         }
 
         public async Task<List<ReportEsologsResponse>> GetAllReportsAndFightsAsync(
-            int zoneId = 1, int difficulty = 122, CancellationToken token = default)
+            int zoneId = 1, int difficulty = 122, long startTime = 0, long endTime = 0,
+            CancellationToken token = default)
         {
             var resultList = new List<ReportEsologsResponse>();
 
-            var startTime = options.Value.TrialStartTimeSlice;
-            var currentTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var endSlice = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() <= endTime 
+                ? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() 
+                : endTime;
             var oneDay = 60480000; // 1 week slice
 
-            for (double t = startTime; t < currentTime; t += oneDay)
+            for (double t = startTime; t < endSlice; t += oneDay)
             {
                 var sliceStart = t;
                 var sliceEnd = t + oneDay;

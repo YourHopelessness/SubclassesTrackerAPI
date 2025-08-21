@@ -13,5 +13,15 @@ namespace SubclassesTracker.Api.BackgroundQueue.Jobs.JobParameters
         /// List of the zones
         /// </summary>
         public List<int>? ZonesList { get; set; }
+
+        /// <summary>
+        /// Start time of the reports slice
+        /// </summary>
+        public long StartSliceTime { get; set; }
+
+        /// <summary>
+        /// End time of the reports slice
+        /// </summary>
+        public long EndSliceTime { get; set; }
     }
 }

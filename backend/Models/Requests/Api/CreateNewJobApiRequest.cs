@@ -18,5 +18,15 @@ namespace SubclassesTracker.Api.Models.Requests.Api
         /// The number of zones for job type = CollectDataForClassLines and CollecctDataForRaces
         /// </summary>
         public List<int>? CollectedZoneIds { get; set; }
+
+        /// <summary>
+        /// Start time of the reports slice for job type = CollectDataForClassLines and CollecctDataForRaces
+        /// </summary>
+        public DateTime? StartSliceTime { get; set; }
+
+        /// <summary>
+        /// End time of the reports slice for job type = CollectDataForClassLines and CollecctDataForRaces
+        /// </summary>
+        public DateTime? EndSliceTime { get; set; }
     }
 }

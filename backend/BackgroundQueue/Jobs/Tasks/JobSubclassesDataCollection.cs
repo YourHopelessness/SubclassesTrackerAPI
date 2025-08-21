@@ -37,8 +37,10 @@ namespace SubclassesTracker.Api.BackgroundQueue.Jobs.Tasks
 
                     result.ZoneNames.Add(zone.Name);
 
-                    trialStats.AddRange(await dataService.GetSkillLinesAsync(zone.Id, difficulty?.DifficultyId ?? 0, token: ct));
-                    trialStatsWithScore.AddRange(await dataService.GetSkillLinesAsync(zone.Id, difficulty?.DifficultyId ?? 0, true, token: ct));
+                    trialStats.AddRange(await dataService.GetSkillLinesAsync(
+                        zone.Id, difficulty?.DifficultyId ?? 0, startTime: parameters.StartSliceTime, endTime: parameters.EndSliceTime, token: ct));
+                    trialStatsWithScore.AddRange(await dataService.GetSkillLinesAsync(
+                        zone.Id, difficulty?.DifficultyId ?? 0, parameters.StartSliceTime, parameters.EndSliceTime, true, token: ct));
 
                     jobMonitor.TryUpdate(parameters.JobId, prev => ((JobInfo<SubclassesDataCollectionApiResponse, EsologsParams>)prev) with
                     {
