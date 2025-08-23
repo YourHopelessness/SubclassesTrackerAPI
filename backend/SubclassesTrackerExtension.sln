@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubclassesTracker.Database"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SubclassesTracker.Api", "SubclassesTracker.Api", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubclassesTracker.Caching", "..\SubclassesTracker.Caching\SubclassesTracker.Caching.csproj", "{7BB6C163-4BAF-4479-9AB1-5E355A1ECBB1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +31,10 @@ Global
 		{5E767E61-22AC-C9A2-451B-A2C2E3257DC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5E767E61-22AC-C9A2-451B-A2C2E3257DC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5E767E61-22AC-C9A2-451B-A2C2E3257DC4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7BB6C163-4BAF-4479-9AB1-5E355A1ECBB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7BB6C163-4BAF-4479-9AB1-5E355A1ECBB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7BB6C163-4BAF-4479-9AB1-5E355A1ECBB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7BB6C163-4BAF-4479-9AB1-5E355A1ECBB1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -37,6 +43,7 @@ Global
 		{537F1E69-56CE-4D49-9CAC-D48E4233DD47} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{5E767E61-22AC-C9A2-451B-A2C2E3257DC4} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
+		{7BB6C163-4BAF-4479-9AB1-5E355A1ECBB1} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CFFA64D4-E337-4353-8819-9AC680E0B422}
