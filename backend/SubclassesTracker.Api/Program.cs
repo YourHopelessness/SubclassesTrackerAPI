@@ -17,6 +17,7 @@ using SubclassesTracker.Caching.Services.ObjectSerilization;
 using SubclassesTracker.Database.Context;
 using SubclassesTracker.Database.Entity;
 using SubclassesTracker.Database.Repository;
+using SubclassesTracker.GraphQL;
 using SubclassesTracker.GraphQL.Services;
 using SubclassesTracker.Models;
 
@@ -58,8 +59,12 @@ builder.Services.AddCors(opts =>
         .AllowCredentials());
 });
 
-// Register services
+// Register graphql services
+builder.Services.AddScoped<IGraphQLClientExecutor, GraphQLClientExecutor>();
+builder.Services.AddScoped<IQueryLoader, EmbeddedQueryLoader>();
 builder.Services.AddScoped<IGraphQLGetService, GraphQLGetService>();
+
+// Register services
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IReportSubclassesDataService, ReportSubclassesDataService>();
 builder.Services.AddScoped<IReportRacialDataService, ReportRacialDataService>();
@@ -79,7 +84,7 @@ builder.Services.AddDbContext<ParquetCacheContext>(options =>
 
 // Register token validator
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddHttpClient("Esologs")
+builder.Services.AddEsologsHttpClient(builder.Configuration)
        .AddHttpMessageHandler<BearerPropagationHandler>();
 builder.Services.AddTransient<BearerPropagationHandler>();
 
