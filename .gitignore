@@ -15,3 +15,4 @@
 /backend/SubclassesTracker.Models/bin/Debug/net9.0
 /backend/SubclassesTracker.Models/obj
 /backend/SubclassesTracker.Database/obj
+*.sqbpro

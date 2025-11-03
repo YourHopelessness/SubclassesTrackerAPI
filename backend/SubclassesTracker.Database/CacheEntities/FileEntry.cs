@@ -38,7 +38,7 @@ namespace SubclassesTracker.Database.CacheEntities
         /// Partition ID where the file is located
         /// if null, the file is considered to be in the root (e.g. dataset) folder
         /// </summary>
-        public long? PartitionId { get; set; }
+        public int? PartitionId { get; set; }
         public Partition? Partition { get; set; } = null!;
 
         /// <summary>
@@ -50,7 +50,9 @@ namespace SubclassesTracker.Database.CacheEntities
         /// <summary>
         /// Full path to the file
         /// </summary>
-        public string FullPath => System.IO.Path.Combine(Partition?.Path ?? Dataset.RootPath, FileName);
+        public string FullPath => Partition is not null 
+            ? Path.Combine(Dataset.RootPath, Partition!.Path, FileName)
+            : Path.Combine(Dataset.RootPath, FileName);
 
         /// <summary>
         /// Request snapshots associated with this file entry.

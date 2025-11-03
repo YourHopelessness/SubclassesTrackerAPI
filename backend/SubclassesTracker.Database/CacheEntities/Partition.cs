@@ -22,10 +22,8 @@ namespace SubclassesTracker.Database.CacheEntities
         /// <summary>
         /// Path of the partition (e.g logId or time).
         /// </summary>
-        private string _path = null!;
-
         [MaxLength(1024)]
-        public string Path { get => System.IO.Path.Combine(Dataset.RootPath, _path); set => _path = value; }
+        public string Path { get; set; } = null!;
 
         public ICollection<FileEntry> Files { get; set; } = [];
     }

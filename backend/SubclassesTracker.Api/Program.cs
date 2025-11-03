@@ -10,6 +10,10 @@ using SubclassesTracker.Api.EsologsServices;
 using SubclassesTracker.Api.EsologsServices.Reports;
 using SubclassesTracker.Api.Middleware;
 using SubclassesTracker.Api.Utils;
+using SubclassesTracker.Caching;
+using SubclassesTracker.Caching.Parquet;
+using SubclassesTracker.Caching.Services;
+using SubclassesTracker.Caching.Services.ObjectSerilization;
 using SubclassesTracker.Database.Context;
 using SubclassesTracker.Database.Entity;
 using SubclassesTracker.Database.Repository;
@@ -23,6 +27,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configire the entire application conf
 builder.Services.Configure<LinesConfig>(builder.Configuration.GetSection(nameof(LinesConfig)));
+builder.Services.Configure<CachingSettings>(builder.Configuration.GetSection(nameof(CachingSettings)));
 
 // Add CORS policy for the Chrome extension
 const string ExtensionCorsPolicy = "ExtensionPolicy";
@@ -63,6 +68,15 @@ builder.Services.AddScoped<ILoaderService, LoaderService>();
 // Register the controller Validation
 builder.Services.AddValidatorsFromAssemblyContaining<RequiredZonesForSpecificJobTypesAttribute>();
 builder.Services.AddFluentValidationAutoValidation();
+
+// Register caching services
+builder.Services.AddObjectFlattening();
+builder.Services.AddScoped<IParquetCacheService, ParquetCacheService>();
+builder.Services.AddScoped<IDynamicParquetWriter, DynamicParquetWriter>();
+builder.Services.AddScoped<IDynamicParquetReader, DynamicParquetReader>();
+builder.Services.AddDbContext<ParquetCacheContext>(options =>
+    options.UseSqlite("Data Source=" +
+        builder.Configuration.GetSection("LinesConfig:SkillLinesDb").Value));
 
 // Register token validator
 builder.Services.AddHttpContextAccessor();

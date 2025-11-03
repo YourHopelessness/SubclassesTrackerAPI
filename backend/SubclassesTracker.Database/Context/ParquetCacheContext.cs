@@ -19,7 +19,8 @@ namespace SubclassesTracker.Database.Context
 
             b.Entity<FileEntry>()
                 .HasMany(fe => fe.RequestSnapshots)
-                .WithMany(d => d.FileEntries);
+                .WithMany(d => d.FileEntries)
+                .UsingEntity("FileEntryRequestSnapshot");
 
             b.Entity<Partition>()
                 .HasOne(p => p.Dataset)
