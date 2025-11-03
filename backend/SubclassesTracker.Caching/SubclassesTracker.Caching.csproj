@@ -13,6 +13,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="GraphQLClient/Queries/*.graphql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SubclassesTracker.Database\SubclassesTracker.Database.csproj" />
     <ProjectReference Include="..\SubclassesTracker.Models\SubclassesTracker.Models.csproj" />
   </ItemGroup>

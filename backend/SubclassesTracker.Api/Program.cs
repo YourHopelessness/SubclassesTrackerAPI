@@ -75,8 +75,7 @@ builder.Services.AddScoped<IParquetCacheService, ParquetCacheService>();
 builder.Services.AddScoped<IDynamicParquetWriter, DynamicParquetWriter>();
 builder.Services.AddScoped<IDynamicParquetReader, DynamicParquetReader>();
 builder.Services.AddDbContext<ParquetCacheContext>(options =>
-    options.UseSqlite("Data Source=" +
-        builder.Configuration.GetSection("LinesConfig:SkillLinesDb").Value));
+    options.UseSqlite(builder.Configuration.GetConnectionString("ParquetCache")));
 
 // Register token validator
 builder.Services.AddHttpContextAccessor();
@@ -86,8 +85,7 @@ builder.Services.AddTransient<BearerPropagationHandler>();
 
 // Register database dependencies
 builder.Services.AddDbContext<EsoContext>(options =>
-    options.UseSqlite("Data Source=" +
-        builder.Configuration.GetSection("LinesConfig:SkillLinesDb").Value));
+    options.UseSqlite(builder.Configuration.GetConnectionString("SkillLinesDb")));
 // Register the repositories
 builder.Services.AddScoped<IBaseRepository<SkillLine>, BaseRepository<SkillLine>>();
 builder.Services.AddScoped<IBaseRepository<SkillTreeEntry>, BaseRepository<SkillTreeEntry>>();
