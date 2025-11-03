@@ -80,7 +80,13 @@ namespace SubclassesTracker.Caching.Parquet
             }
 
             // --- Write to Parquet file ---
-            using var fs = File.Create(Path.Combine(cachingSettings.CacheRootPath, outputPath));
+            var directory = Path.GetDirectoryName(outputPath);
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory!);
+            }
+            using var fs = File.Create(outputPath);
+
             using var writer = await ParquetWriter.CreateAsync(schema, fs, cancellationToken: ct);
             writer.CompressionMethod = compression;
 

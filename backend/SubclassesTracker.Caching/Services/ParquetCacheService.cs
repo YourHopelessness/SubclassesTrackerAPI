@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SubclassesTracker.Caching.Parquet;
 using SubclassesTracker.Caching.Services.ObjectSerilization;
 using SubclassesTracker.Database.CacheEntities;
@@ -35,11 +36,13 @@ namespace SubclassesTracker.Caching.Services
     public class ParquetCacheService(
         ILogger<ParquetCacheService> logger,
         IObjectFlattener objectFlattener,
-        IObjectUnflattener objectUnflattener,
         IDynamicParquetWriter dynamicParquetWriter,
         IDynamicParquetReader dynamicParquetReader,
+        IOptions<CachingSettings> options,
         ParquetCacheContext context) : IParquetCacheService
     {
+        private readonly CachingSettings cachingSettings = options.Value;
+
         public async Task<T?> LoadFromCacheAsync<T>(string queryName, string hash, CancellationToken token = default)
             where T : class, new()
         {
@@ -61,12 +64,30 @@ namespace SubclassesTracker.Caching.Services
             if (file == null)
                 return null;
 
-            var flatRows = await dynamicParquetReader.ReadTypedAsync<T>(file.FullPath, token);
-            if (flatRows.Count == 0)
-                return null;
+            // Determine if T is a collection type
+            var tType = typeof(T);
+            var isCollection = tType.IsGenericType && tType.GetGenericTypeDefinition() == typeof(List<>);
+            var elementType = isCollection ? tType.GetGenericArguments()[0] : tType;
 
-            
-            return flatRows as T;
+            var readerType = typeof(DynamicParquetReader);
+            var readMethod = readerType.GetMethod(nameof(DynamicParquetReader.ReadTypedAsync))!
+                .MakeGenericMethod(elementType);
+
+            var task = (Task)readMethod.Invoke(dynamicParquetReader, [Path.Combine(cachingSettings.CacheRootPath, file.FullPath), token])!;
+            await task.ConfigureAwait(false);
+
+            var resultProperty = task.GetType().GetProperty("Result")!;
+            var list = (IList)resultProperty.GetValue(task)!;
+
+            // Return as collection
+            if (isCollection)
+                return list as T;
+
+            // Return first item or null
+            if (list.Count > 0)
+                return list[0] as T;
+
+            return null;
         }
 
         public async Task SaveToCacheAsync<T>(
@@ -81,6 +102,7 @@ namespace SubclassesTracker.Caching.Services
         {
             var existing = await context.RequestSnapshots
                 .Where(x => x.QueryName == queryName && x.VarsHash == hash)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(token);
 
             if (existing is not null && !forceRefresh)
@@ -88,18 +110,23 @@ namespace SubclassesTracker.Caching.Services
 
             var dataset = await context.Datasets
                 .Include(d => d.Partitions)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(d => d.Id == datasetId, token)
                 ?? throw new InvalidOperationException("Dataset not found");
 
-            var partition = dataset.Partitions.FirstOrDefault(p => p.Path.EndsWith(partitionPath ?? ""))
-                           ?? new Partition
-                           {
-                               DatasetId = dataset.Id,
-                               Path = partitionPath ?? string.Empty
-                           };
+            Partition? partition = null;
+            if (partitionPath != null)
+            {
+                partition = dataset.Partitions.FirstOrDefault(p => p.Path.EndsWith(partitionPath ?? ""))
+                               ?? new Partition
+                               {
+                                   DatasetId = dataset.Id,
+                                   Path = partitionPath ?? string.Empty
+                               };
 
-            if (partition.Id == 0)
-                context.Partitions.Add(partition);
+                if (partition.Id == 0)
+                    context.Partitions.Add(partition);
+            }
 
             var rows = data switch
             {
@@ -125,8 +152,10 @@ namespace SubclassesTracker.Caching.Services
             {
                 // Write Parquet file
                 var filename = $"part-{Guid.NewGuid():N}.parquet";
-                var fullPath = Path.Combine(partition.Path, filename);
-                Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+                var fullPath = Path.Combine(cachingSettings.CacheRootPath, dataset.RootPath, 
+                    partition is not null 
+                        ? Path.Combine(partition!.Path, filename) 
+                        : filename);
 
                 await dynamicParquetWriter.WriteAsync(rows, fullPath, ct: token);
 

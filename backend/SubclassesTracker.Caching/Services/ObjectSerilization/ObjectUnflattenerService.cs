@@ -1,5 +1,4 @@
-﻿using Mapster;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Parquet.Schema;
 using System.Collections;
 using System.Reflection;

@@ -22,11 +22,8 @@ namespace SubclassesTracker.Caching.Parquet
     /// Parquet reader that reads data into dynamic dictionaries
     /// </summary>
     public class DynamicParquetReader(
-        IOptions<CachingSettings> options,
         IObjectUnflattener unflattener) : IDynamicParquetReader
     {
-        private readonly CachingSettings cachingSettings = options.Value;
-
         public async Task<List<T>> ReadTypedAsync<T>(
             string relativePath,
             CancellationToken ct = default)
@@ -34,7 +31,7 @@ namespace SubclassesTracker.Caching.Parquet
         {
             var results = new List<T>();
 
-            using var fs = File.OpenRead(Path.Combine(cachingSettings.CacheRootPath, relativePath));
+            using var fs = File.OpenRead(relativePath);
             using var reader = await ParquetReader.CreateAsync(fs, cancellationToken: ct);
             var schema = reader.Schema;
 
