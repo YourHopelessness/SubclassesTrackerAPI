@@ -44,18 +44,11 @@ namespace SubclassesTracker.GraphQL.Services
         Task<BuffsEventsWithPlayersEsologsResponse> GetBuffsEventsAsync(
             string logId, List<int> fightId, CancellationToken token = default);
     }
-    public class GraphQLGetService(
-        IOptions<LinesConfig> options,
-        IHttpClientFactory httpClientFactory,
-        IParquetCacheService parquetCacheService,
-        ILogger<GraphQLGetService> logger) : IGraphQLGetService
+    public class GraphQLGetService(IGraphQLClientExecutor graphQLClient) : IGraphQLGetService
     {
-        private readonly QraphQlExecutor qlExecutor =
-            new(options.Value.EsoLogsApiUrl, logger, httpClientFactory, parquetCacheService);
-
         public async Task<List<FightEsologsResponse>> GetFigthsAsync(string logId, CancellationToken token = default)
         {
-            var fights = await qlExecutor.QueryAsync<List<FightEsologsResponse>, GetFightsVars>(
+            var fights = await graphQLClient.QueryAsync<List<FightEsologsResponse>, GetFightsVars>(
                 GraphQlQueryEnum.GetFights, 
                 new GetFightsVars(logId), 
                 partitionPath: logId,
@@ -66,7 +59,7 @@ namespace SubclassesTracker.GraphQL.Services
 
         public async Task<PlayerListResponse> GetPlayersAsync(string logId, List<int> fightsIds, CancellationToken token = default)
         {
-            var players = await qlExecutor.QueryAsync<PlayerListResponse, GetPlayersVars>(
+            var players = await graphQLClient.QueryAsync<PlayerListResponse, GetPlayersVars>(
                 GraphQlQueryEnum.GetPlayers,
                 new GetPlayersVars(logId, [.. fightsIds]),
                 partitionPath: logId,
@@ -78,7 +71,7 @@ namespace SubclassesTracker.GraphQL.Services
         public async Task<List<BuffEsologsResponse>> GetPlayerBuffsAsync(
             string logId, int playerId, List<int> fightId, CancellationToken token = default)
         {
-            var buffs = await qlExecutor.QueryAsync<List<BuffEsologsResponse>, GetBuffsVars>(
+            var buffs = await graphQLClient.QueryAsync<List<BuffEsologsResponse>, GetBuffsVars>(
                 GraphQlQueryEnum.GetBuffs, 
                 new GetBuffsVars(logId, playerId, [.. fightId]), 
                 partitionPath: logId + playerId.ToString(),
@@ -103,7 +96,7 @@ namespace SubclassesTracker.GraphQL.Services
                 var sliceStart = t;
                 var sliceEnd = t + oneDay;
 
-                resultList.AddRange(await GraphQLExtensions.QueryAllPagesAsync(async page =>
+                resultList.AddRange(await GraphQLClientExecutor.QueryAllPagesAsync(async page =>
                 {
                     if (page > 24)
                     {
@@ -119,7 +112,7 @@ namespace SubclassesTracker.GraphQL.Services
                         100,
                         difficulty);
 
-                    var result = await qlExecutor.QueryAsync<ReportRequestEsologsResponse, GetReportsWithFightsVars>(
+                    var result = await graphQLClient.QueryAsync<ReportRequestEsologsResponse, GetReportsWithFightsVars>(
                             GraphQlQueryEnum.GetReportsWithFights,
                             variables,
                             partitionPath: sliceStart.ToString() + sliceEnd.ToString(),
@@ -135,7 +128,7 @@ namespace SubclassesTracker.GraphQL.Services
 
         public async Task<List<ZoneApiResponse>> GetAllZonesAndEncountersAsync(CancellationToken token = default)
         {
-            var zones = await qlExecutor.QueryAsync<List<ZoneApiResponse>, GetAllEncountersVars>(
+            var zones = await graphQLClient.QueryAsync<List<ZoneApiResponse>, GetAllEncountersVars>(
                 GraphQlQueryEnum.GetAllEncounters,
                 new GetAllEncountersVars(), 
                 forceRefresh: true, 
@@ -147,7 +140,7 @@ namespace SubclassesTracker.GraphQL.Services
         public async Task<BuffsEventsWithPlayersEsologsResponse> GetBuffsEventsAsync(
             string logId, List<int> fightId, CancellationToken token = default)
         {
-            var buffAndEvents = await qlExecutor.QueryAsync<BuffsEventsWithPlayersEsologsResponse, GetBuffsEventsVars>(
+            var buffAndEvents = await graphQLClient.QueryAsync<BuffsEventsWithPlayersEsologsResponse, GetBuffsEventsVars>(
                 GraphQlQueryEnum.GetBuffsEvents, 
                 new GetBuffsEventsVars(logId, [.. fightId]), 
                 partitionPath: logId, 

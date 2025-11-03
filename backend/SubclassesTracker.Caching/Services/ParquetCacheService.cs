@@ -102,7 +102,6 @@ namespace SubclassesTracker.Caching.Services
         {
             var existing = await context.RequestSnapshots
                 .Where(x => x.QueryName == queryName && x.VarsHash == hash)
-                .AsNoTracking()
                 .FirstOrDefaultAsync(token);
 
             if (existing is not null && !forceRefresh)
@@ -110,7 +109,6 @@ namespace SubclassesTracker.Caching.Services
 
             var dataset = await context.Datasets
                 .Include(d => d.Partitions)
-                .AsNoTracking()
                 .FirstOrDefaultAsync(d => d.Id == datasetId, token)
                 ?? throw new InvalidOperationException("Dataset not found");
 
