@@ -40,7 +40,7 @@ jobs:
           dotnet-version: '9.0.x'
           
       - name: Publish
-        run: dotnet publish SubclassesTracker.Api.csproj -c Release -o publish
+        run: dotnet publish SubclassesTracker.Api/SubclassesTracker.Api.csproj -c Release -o publish
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
