@@ -4,3 +4,14 @@
 
 /.vs
 /.config
+/SubclassesTracker.Caching/obj
+/SubclassesTracker.GraphQL/obj
+/SubclassesTracker.Models/obj
+/backend/.vs
+/backend/SubclassesTracker.Caching/bin/Debug/net9.0
+/backend/SubclassesTracker.Database/bin/Debug/net9.0
+/backend/SubclassesTracker.GraphQL/bin/Debug/net9.0
+/backend/SubclassesTracker.GraphQL/obj
+/backend/SubclassesTracker.Models/bin/Debug/net9.0
+/backend/SubclassesTracker.Models/obj
+/backend/SubclassesTracker.Database/obj
