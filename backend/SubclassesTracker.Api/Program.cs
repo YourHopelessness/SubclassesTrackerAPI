@@ -12,6 +12,7 @@ using SubclassesTracker.Api.EsologsServices;
 using SubclassesTracker.Api.EsologsServices.Reports;
 using SubclassesTracker.Api.Middleware;
 using SubclassesTracker.Api.Utils;
+using SubclassesTracker.Api.Utils.Seed;
 using SubclassesTracker.Caching;
 using SubclassesTracker.Caching.Parquet;
 using SubclassesTracker.Caching.Services;
@@ -118,7 +119,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var parquetDb = services.GetRequiredService<ParquetCacheContext>();
-        await parquetDb.Database.MigrateAsync();
+        await DbInitializer.SeedDatasetsAsync(services);
     }
     catch (Exception ex)
     {
