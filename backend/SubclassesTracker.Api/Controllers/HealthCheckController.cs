@@ -13,11 +13,15 @@ namespace SubclassesTracker.Api.Controllers
     {
         [HttpGet("health")]
         [AllowAnonymous]
-        public async Task<IActionResult> HealthCheck([FromServices] EsoContext db, CancellationToken token)
+        public async Task<IActionResult> HealthCheck(
+            [FromServices] EsoContext db,
+            [FromServices] ParquetCacheContext parquetDb,
+            CancellationToken token)
         {
             try
             {
                 await db.Database.ExecuteSqlRawAsync("SELECT 1", token);
+                await parquetDb.Database.ExecuteSqlRawAsync("SELECT 1", token);
 
                 return Ok("Healthy");
             }
