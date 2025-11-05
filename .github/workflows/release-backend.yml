@@ -110,7 +110,7 @@ jobs:
           
                 MAX_RETRIES=10
                 RETRY_DELAY=5
-                URL="http://localhost/api/HealthCheck/health"
+                URL="http://127.0.0.1:5000/api/HealthCheck/health"
 
                 for i in $(seq 1 $MAX_RETRIES); do
                   echo "Attempt $i/$MAX_RETRIES: Checking $URL..."
