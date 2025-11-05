@@ -1,5 +1,6 @@
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using FluentValidation;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 using SQLitePCL;
@@ -128,6 +129,16 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors(ExtensionCorsPolicy);
 app.UseCors(EsologsCorsPolicy);
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseForwardedHeaders(new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+    });
+
+    app.UseHsts();
+}
 
 app.UseRouting();
 app.UseMiddleware<EnsureFreshTokenMiddleware>();
