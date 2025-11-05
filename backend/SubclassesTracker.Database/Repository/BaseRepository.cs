@@ -44,16 +44,14 @@ namespace SubclassesTracker.Database.Repository
     public class BaseRepository<T>(EsoContext context) : IBaseRepository<T> 
         where T : class, IHaveIdentifier, new()
     {
-        protected readonly EsoContext _context = context;
-
         public IQueryable<T> GetList(Expression<Func<T, bool>> predicate, bool noTracking = true)
         {
-            return _context.Set<T>().Where(predicate).Detach(noTracking);
+            return context.Set<T>().Where(predicate).Detach(noTracking);
         }
 
         public IQueryable<T> GetAll(bool noTracking = true)
         {
-            return _context.Set<T>().Detach(noTracking);
+            return context.Set<T>().Detach(noTracking);
         }
 
         public async Task<T?> GetByParam(
@@ -61,30 +59,30 @@ namespace SubclassesTracker.Database.Repository
             CancellationToken token,
             bool noTracking = true)
         {
-            return await _context.Set<T>().Detach(noTracking).FirstOrDefaultAsync(predicate, token);
+            return await context.Set<T>().Detach(noTracking).FirstOrDefaultAsync(predicate, token);
         }
 
         public async Task AddAsync(T entity, CancellationToken token)
         {
-            await _context.Set<T>().AddAsync(entity, token);
+            await context.Set<T>().AddAsync(entity, token);
 
-            await _context.SaveChangesAsync(token);
+            await context.SaveChangesAsync(token);
         }
 
         public async Task UpdateAsync(T entity, CancellationToken token)
         {
-            _context.Entry(entity).State = EntityState.Modified;
-            _context.Set<T>().Update(entity);
+            context.Entry(entity).State = EntityState.Modified;
+            context.Set<T>().Update(entity);
 
-            await _context.SaveChangesAsync(token);
+            await context.SaveChangesAsync(token);
         }
 
         public async Task DeleteAsync(int entityId, CancellationToken token)
         {
             var deletedEnity = new T { Id = entityId };
-            _context.Entry(deletedEnity).State = EntityState.Deleted;
+            context.Entry(deletedEnity).State = EntityState.Deleted;
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync(token);
         }
     }
 }

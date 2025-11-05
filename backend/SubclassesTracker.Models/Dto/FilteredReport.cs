@@ -7,4 +7,8 @@ namespace SubclassesTracker.Models.Dto
          int ZoneId,
          string ZoneName,
          List<FightEsologsResponse> Fights);
+
+    public sealed record FilterReportsResult(
+        List<FilteredReport> WithoutCense,
+        List<FilteredReport> WithCense);
 }

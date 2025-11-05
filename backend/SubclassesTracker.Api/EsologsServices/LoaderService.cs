@@ -1,23 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SubclassesTracker.Database.Entity;
 using SubclassesTracker.Database.Repository;
-using SubclassesTracker.GraphQL.Services;
 using SubclassesTracker.Models.Dto;
 using SubclassesTracker.Models.Responses.Api;
-using SubclassesTracker.Models.Responses.Esologs;
 
 namespace SubclassesTracker.Api.EsologsServices
 {
     public interface ILoaderService
     {
-        /// <summary>
-        /// Load players dor specific report
-        /// </summary>
-        /// <param name="filteredReports">filtered reports</param>
-        /// <returns></returns>
-        Task<Dictionary<string, PlayerListResponse>> LoadPlayersForReportsAsync(
-            List<FilteredReport> filteredReports,
-            CancellationToken token);
         /// <summary>
         /// Load all trial zones
         /// </summary>
@@ -39,29 +29,9 @@ namespace SubclassesTracker.Api.EsologsServices
     /// Loader service
     /// </summary>
     public class LoaderService(
-        IGraphQLGetService dataService,
         IBaseRepository<SkillTreeEntry> skillsRepository,
         IBaseRepository<Zone> zoneRepository) : ILoaderService
     {
-        public async Task<Dictionary<string, PlayerListResponse>> LoadPlayersForReportsAsync(
-            List<FilteredReport> filteredReports,
-            CancellationToken token)
-        {
-            var tasks = filteredReports
-                .Select(async r =>
-                {
-                    var fightIds = r.Fights.Select(f => f.Id).ToList();
-                    var players = await dataService.GetPlayersAsync(r.LogId, fightIds, token);
-                    players.LogId = r.LogId;
-
-                    return players;
-                });
-
-            var results = await Task.WhenAll(tasks);
-
-            return results.ToDictionary(p => p.LogId, p => p);
-        }
-
         public async Task<List<ZoneApiResponse>> LoadTrialZonesAsync(CancellationToken token)
         {
             return await zoneRepository

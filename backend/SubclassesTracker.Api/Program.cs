@@ -1,3 +1,4 @@
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
@@ -76,11 +77,13 @@ builder.Services.AddFluentValidationAutoValidation();
 
 // Register caching services
 builder.Services.AddObjectFlattening();
-builder.Services.AddScoped<IParquetCacheService, ParquetCacheService>();
-builder.Services.AddScoped<IDynamicParquetWriter, DynamicParquetWriter>();
-builder.Services.AddScoped<IDynamicParquetReader, DynamicParquetReader>();
-builder.Services.AddDbContext<ParquetCacheContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("ParquetCache")));
+builder.Services.AddTransient<IParquetCacheService, ParquetCacheService>();
+builder.Services.AddTransient<IDynamicParquetWriter, DynamicParquetWriter>();
+builder.Services.AddTransient<IDynamicParquetReader, DynamicParquetReader>();
+builder.Services.AddDbContextPool<ParquetCacheContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("ParquetCache"));
+});
 
 // Register token validator
 builder.Services.AddHttpContextAccessor();
@@ -91,11 +94,7 @@ builder.Services.AddTransient<BearerPropagationHandler>();
 // Register database dependencies
 builder.Services.AddDbContext<EsoContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SkillLinesDb")));
-// Register the repositories
-builder.Services.AddScoped<IBaseRepository<SkillLine>, BaseRepository<SkillLine>>();
-builder.Services.AddScoped<IBaseRepository<SkillTreeEntry>, BaseRepository<SkillTreeEntry>>();
-builder.Services.AddScoped<IBaseRepository<Zone>, BaseRepository<Zone>>();
-builder.Services.AddScoped<IBaseRepository<Encounter>, BaseRepository<Encounter>>();
+builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 
 // Register the background queue and hosted service
 builder.Services.AddHostedService<QueuedHostedService>();
@@ -109,6 +108,23 @@ builder.Services.AddScoped<JobRacesDataCollection>();
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+// Apply migrations automatically
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    try
+    {
+        var parquetDb = services.GetRequiredService<ParquetCacheContext>();
+        await parquetDb.Database.MigrateAsync();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while migrating databases");
+    }
+}
 
 app.UseCors(ExtensionCorsPolicy);
 app.UseCors(EsologsCorsPolicy);

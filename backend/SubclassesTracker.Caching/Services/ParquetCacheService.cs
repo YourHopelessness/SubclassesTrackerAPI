@@ -6,7 +6,6 @@ using SubclassesTracker.Caching.Services.ObjectSerilization;
 using SubclassesTracker.Database.CacheEntities;
 using SubclassesTracker.Database.Context;
 using System.Collections;
-using System.Text.Json;
 
 namespace SubclassesTracker.Caching.Services
 {
@@ -51,7 +50,6 @@ namespace SubclassesTracker.Caching.Services
                 .ThenInclude(f => f.Partition)
                 .Include(r => r.FileEntries)
                 .ThenInclude(f => f.Dataset)
-                .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.QueryName == queryName && r.VarsHash == hash, token);
 
             if (snapshot is null)
@@ -150,9 +148,9 @@ namespace SubclassesTracker.Caching.Services
             {
                 // Write Parquet file
                 var filename = $"part-{Guid.NewGuid():N}.parquet";
-                var fullPath = Path.Combine(cachingSettings.CacheRootPath, dataset.RootPath, 
-                    partition is not null 
-                        ? Path.Combine(partition!.Path, filename) 
+                var fullPath = Path.Combine(cachingSettings.CacheRootPath, dataset.RootPath,
+                    partition is not null
+                        ? Path.Combine(partition!.Path, filename)
                         : filename);
 
                 await dynamicParquetWriter.WriteAsync(rows, fullPath, ct: token);

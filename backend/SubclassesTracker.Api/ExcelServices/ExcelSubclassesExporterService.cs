@@ -6,16 +6,23 @@ namespace SubclassesTracker.Api.ExcelServices
 {
     public partial class ExcelExporterService
     {
-        public static byte[] ExportSubclassesDataToExcel(
-            IEnumerable<SkillLineReportEsologsResponse> data)
-        {
-            using var wb = new XLWorkbook();
+        private static readonly Lock SubclassesFileLock = new(); // For thread-safe file access
 
-            foreach (var trial in data)
+        /// <summary>
+        /// Appends (or creates) a worksheet for a single zone into an Excel file.
+        /// Thread-safe for concurrent background updates.
+        /// </summary>
+        public static void ExportTrialSheet(
+            SkillLineReportEsologsResponse trial,
+            string filePath)
+        {
+            if (trial is null) return;
+
+            lock (SubclassesFileLock)
             {
-                var sheetName = trial.TrialName.Length > 30
-                    ? trial.TrialName[..30]
-                    : trial.TrialName;
+                using var wb = File.Exists(filePath) ? new XLWorkbook(filePath) : new XLWorkbook();
+
+                var sheetName = trial.TrialName.Length > 30 ? trial.TrialName[..30] : trial.TrialName;
 
                 if (wb.Worksheets.TryGetWorksheet(sheetName, out var oldWs))
                     oldWs.Delete();
@@ -25,18 +32,17 @@ namespace SubclassesTracker.Api.ExcelServices
                 ws.Cell(1, 1).Value = "Role";
                 ws.Cell(1, 2).Value = "Skill Line";
                 ws.Cell(1, 3).Value = "Players";
-                ws.Cell(1, 4).Value = "Unique skills";
-                ws.Range("A1:D1").Style.Font.Bold = true;
+                ws.Range("A1:C1").Style.Font.Bold = true;
 
-                int row = 2;
-                void Dump(IEnumerable<SkillLinesApiResponse> src, string role)
+                var row = 2;
+                void Dump(IEnumerable<SkillLinesApiResponse>? src, string role)
                 {
+                    if (src is null) return;
                     foreach (var l in src)
                     {
                         ws.Cell(row, 1).Value = role;
                         ws.Cell(row, 2).Value = l.LineName;
                         ws.Cell(row, 3).Value = l.PlayersUsingThisLine;
-                        ws.Cell(row, 4).Value = l.UniqueSkillsCount;
                         row++;
                     }
                 }
@@ -45,14 +51,16 @@ namespace SubclassesTracker.Api.ExcelServices
                 Dump(trial.HealersLinesModels, "Healer");
                 Dump(trial.TanksLinesModels, "Tank");
 
-                ws.Columns("A:D").AdjustToContents();
+                ws.Columns("A:C").AdjustToContents();
                 ws.SheetView.FreezeRows(1);
+
+                wb.SaveAs(filePath);
             }
-
-            using var ms = new MemoryStream();
-            wb.SaveAs(ms);
-
-            return ms.ToArray();
         }
+
+        public static void ExportAllZonesSheet(
+            SkillLineReportEsologsResponse summary,
+            string filePath)
+            => ExportTrialSheet(summary, filePath);
     }
 }

@@ -39,13 +39,13 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
 
             var result = new RacialReportApiResponse
             {
-                TrialName = filteredReports.First().ZoneName,
+                TrialName = filteredReports.WithoutCense.First().ZoneName,
                 TankRacesQuantity = racialSkillsDict.Values.DistinctBy(x => x.RacialName).ToDictionary(x => x.RacialName, v => 0),
                 HealerRacesQuantity = racialSkillsDict.Values.DistinctBy(x => x.RacialName).ToDictionary(x => x.RacialName, v => 0),
                 DdRacesQuantity = racialSkillsDict.Values.DistinctBy(x => x.RacialName).ToDictionary(x => x.RacialName, v => 0)
             };
 
-            foreach (var report in filteredReports)
+            foreach (var report in filteredReports.WithoutCense)
             {
                 var eventsbuffs = await graphQLGetService.GetBuffsEventsAsync(
                     report.LogId, [.. report.Fights.Select(x => x.Id)], token);

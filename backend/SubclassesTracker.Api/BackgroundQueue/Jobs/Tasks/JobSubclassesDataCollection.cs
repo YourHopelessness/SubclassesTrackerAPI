@@ -7,12 +7,12 @@ using SubclassesTracker.Database.Entity;
 using SubclassesTracker.Database.Repository;
 using SubclassesTracker.Models.Enums;
 using SubclassesTracker.Models.Responses.Api;
-using SubclassesTracker.Models.Responses.Esologs;
+using System.Collections.Concurrent;
 
 namespace SubclassesTracker.Api.BackgroundQueue.Jobs.Tasks
 {
     public class JobSubclassesDataCollection(
-        IReportSubclassesDataService dataService,
+        IServiceProvider provider,
         IBaseRepository<Zone> repository,
         ILogger<JobSubclassesDataCollection> logger,
         IJobMonitor jobMonitor) : IJob<SubclassesDataCollectionApiResponse, EsologsParams>
@@ -26,87 +26,123 @@ namespace SubclassesTracker.Api.BackgroundQueue.Jobs.Tasks
                 .ToListAsync(cancellationToken: ct);
 
             var result = new SubclassesDataCollectionApiResponse();
-            var trialStats = new List<SkillLineReportEsologsResponse>();
-            var trialStatsWithScore = new List<SkillLineReportEsologsResponse>();
-            var errors = new List<string>();
+            var errors = new ConcurrentBag<string>();
 
-            foreach (var zone in zones)
+            // Create temp directories
+            var tempDir = Path.Combine(Path.GetTempPath(), "subclasses-temp");
+            Directory.CreateDirectory(tempDir);
+
+            var tempDirScore = Path.Combine(Path.GetTempPath(), "subclasses-temp-score");
+            Directory.CreateDirectory(tempDirScore);
+
+            // No more tha 2 paeallel tasks to avoid overwhelming the CPU
+            var parallelOptions = new ParallelOptions
+            {
+                CancellationToken = ct,
+                MaxDegreeOfParallelism = 2
+            };
+
+            var accumulator = new SummaryAccumulator();
+            var accumulatorWithScore = new SummaryAccumulator();
+
+            var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
+
+            // Execute data collection per zone in parallel
+            await Parallel.ForEachAsync(zones, parallelOptions, async (zone, token) =>
             {
                 try
                 {
-                    var difficulty = zone.ZoneDifficulties.Where(x => x.IsHardMode == 1).FirstOrDefault();
+                    // Create a new scope for each parallel task
+                    var scope = scopeFactory.CreateScope();
+                    var dataService = scope.ServiceProvider.GetRequiredService<IReportSubclassesDataService>();
 
-                    result.ZoneNames.Add(zone.Name);
+                    var difficulty = zone.ZoneDifficulties.FirstOrDefault(x => x.IsHardMode == 1);
+                    var zoneNameSafe = SanitizeFileName(zone.Name);
 
-                    trialStats.AddRange(await dataService.GetSkillLinesAsync(
-                        zone.Id, difficulty?.DifficultyId ?? 0, startTime: parameters.StartSliceTime, endTime: parameters.EndSliceTime, token: ct));
-                    trialStatsWithScore.AddRange(await dataService.GetSkillLinesAsync(
-                        zone.Id, difficulty?.DifficultyId ?? 0, parameters.StartSliceTime, parameters.EndSliceTime, true, token: ct));
+                    var trialStats = await dataService.GetSkillLinesAsync(
+                        zone.Id, difficulty?.DifficultyId ?? 0,
+                        startTime: parameters.StartSliceTime,
+                        endTime: parameters.EndSliceTime,
+                        token: token);
 
-                    jobMonitor.TryUpdate(parameters.JobId, prev => ((JobInfo<SubclassesDataCollectionApiResponse, EsologsParams>)prev) with
-                    {
-                        State = JobStatusEnum.Running,
-                        Progress = (int)Math.Floor((double)zones.IndexOf(zone) / zones.Count * 100),
-                        Result = new SubclassesDataCollectionApiResponse
+                    // Export per-zone Excel
+                    var singleFilePath = Path.Combine(tempDir, $"{zoneNameSafe}.xlsx");
+                    ExcelExporterService.ExportTrialSheet(trialStats.WithoutCense, singleFilePath);
+
+                    var singleFilePathScore = Path.Combine(tempDirScore, $"{zoneNameSafe}-score.xlsx");
+                    ExcelExporterService.ExportTrialSheet(trialStats.WithCense, singleFilePathScore);
+
+                    accumulator.AddTrial(trialStats.WithoutCense);
+                    accumulatorWithScore.AddTrial(trialStats.WithCense);
+
+                    logger.LogInformation("Zone {Zone} exported to {Path} and {PathScore}", zone.Name, singleFilePath, singleFilePathScore);
+
+                    lock (result.ZoneNames)
+                        result.ZoneNames.Add(zone.Name);
+
+                    // Update job progress
+                    jobMonitor.TryUpdate(parameters.JobId, prev =>
+                        ((JobInfo<SubclassesDataCollectionApiResponse, EsologsParams>)prev) with
                         {
-                            ZoneNames = result.ZoneNames
-                        }
-                    });
+                            State = JobStatusEnum.Running,
+                            Progress = (int)Math.Floor((double)(zones.IndexOf(zone) + 1) / zones.Count * 100),
+                            Result = new SubclassesDataCollectionApiResponse
+                            {
+                                ZoneNames = result.ZoneNames
+                            }
+                        });
                 }
                 catch (Exception ex)
                 {
-                    var errorMessage = $"Error collecting data for zone {zone.Name}: {ex.Message}";
-
-                    errors.Add(errorMessage);
-                    logger.LogError(ex, errorMessage);
-
-                    result.ZoneNames.Remove(zone.Name);
+                    var msg = $"Error collecting data for zone {zone.Name}: {ex.Message}";
+                    errors.Add(msg);
+                    logger.LogError(ex, msg);
                 }
-            }
+            });
 
-            trialStats.Add(SummarizeTrialStats(trialStats));
-            trialStatsWithScore.Add(SummarizeTrialStats(trialStatsWithScore));
+            // Make All Zones summary sheets
+            ExcelExporterService.ExportAllZonesSheet(
+                accumulator.BuildSummary(),
+                Path.Combine(tempDir, $"allZones.xlsx"));
+            ExcelExporterService.ExportAllZonesSheet(
+                accumulatorWithScore.BuildSummary(),
+                Path.Combine(tempDirScore, $"allZones_score.xlsx"));
 
-            result.LinesStats = ExcelExporterService.ExportSubclassesDataToExcel(trialStats);
-            result.LinesStatsWithScore = ExcelExporterService.ExportSubclassesDataToExcel(trialStatsWithScore);
+            // Merge all zone Excels into one
+            var mergedPath = Path.Combine(tempDir, $"subclasses_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+            ExcelExporterService.MergeExcels(tempDir, mergedPath);
 
-            if (errors.Count > 0)
+            var mergedPathScore = Path.Combine(tempDirScore, $"subclasses_score_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+            ExcelExporterService.MergeExcels(tempDirScore, mergedPathScore);
+
+            result.LinesStats = await File.ReadAllBytesAsync(mergedPath, ct);
+            result.LinesStatsWithScore = await File.ReadAllBytesAsync(mergedPathScore, ct);
+
+            logger.LogInformation("Data collection complete, Excel files ready ({Bytes} bytes, and {BytesScore} bytes with score)",
+                result.LinesStats.Length,
+                result.LinesStatsWithScore.Length);
+
+            if (!errors.IsEmpty)
             {
-                var errorMessage = "Data collection completed with errors:\n" + string.Join("\n", errors);
-                throw new PartialSuccessException<SubclassesDataCollectionApiResponse>(result, errorMessage);
+                var errMsg = "Data collection completed with errors:\n" + string.Join("\n", errors);
+                throw new PartialSuccessException<SubclassesDataCollectionApiResponse>(result, errMsg);
             }
 
-            logger.LogInformation("Data collect ended");
+            logger.LogInformation("Data collection finished successfully, Excel saved to {Path}", mergedPath);
 
             return result;
         }
 
         /// <summary>
-        /// Make sum of all trial stats
+        /// Sanitize file name by replacing invalid characters
         /// </summary>
-        private static SkillLineReportEsologsResponse SummarizeTrialStats(
-            List<SkillLineReportEsologsResponse> trialStats)
+        /// <param name="name"></param>
+        /// <returns></returns>
+        private static string SanitizeFileName(string name)
         {
-            static List<SkillLinesApiResponse> SumLines(IEnumerable<SkillLinesApiResponse> lines)
-            {
-                return [.. lines
-                    .GroupBy(x => x.LineName)
-                    .Select(x => new SkillLinesApiResponse
-                    {
-                        LineName = x.Key,
-                        PlayersUsingThisLine = x.Sum(y => y.PlayersUsingThisLine),
-                        UniqueSkillsCount = x.Max(y => y.UniqueSkillsCount),
-                        Skills = [.. x.SelectMany(y => y.Skills).Distinct()]
-                    })];
-            }
-
-            return new SkillLineReportEsologsResponse
-            {
-                TrialName = "All Zones",
-                DdLinesModels = SumLines(trialStats.SelectMany(x => x.DdLinesModels)),
-                HealersLinesModels = SumLines(trialStats.SelectMany(x => x.HealersLinesModels)),
-                TanksLinesModels = SumLines(trialStats.SelectMany(x => x.TanksLinesModels))
-            };
+            foreach (var c in Path.GetInvalidFileNameChars())
+                name = name.Replace(c, '_');
+            return name;
         }
     }
 }

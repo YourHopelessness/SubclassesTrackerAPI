@@ -1,9 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using SubclassesTracker.Caching.Services;
-using SubclassesTracker.GraphQL.GraphQLClient;
-using SubclassesTracker.Models;
-using SubclassesTracker.Models.Enums;
+﻿using SubclassesTracker.Models.Enums;
 using SubclassesTracker.Models.Responses.Api;
 using SubclassesTracker.Models.Responses.Esologs;
 using static SubclassesTracker.GraphQL.GraphQLClient.GraphQLQueries;
@@ -49,8 +44,8 @@ namespace SubclassesTracker.GraphQL.Services
         public async Task<List<FightEsologsResponse>> GetFigthsAsync(string logId, CancellationToken token = default)
         {
             var fights = await graphQLClient.QueryAsync<List<FightEsologsResponse>, GetFightsVars>(
-                GraphQlQueryEnum.GetFights, 
-                new GetFightsVars(logId), 
+                GraphQlQueryEnum.GetFights,
+                new GetFightsVars(logId),
                 partitionPath: logId,
                 token: token);
 
@@ -72,8 +67,8 @@ namespace SubclassesTracker.GraphQL.Services
             string logId, int playerId, List<int> fightId, CancellationToken token = default)
         {
             var buffs = await graphQLClient.QueryAsync<List<BuffEsologsResponse>, GetBuffsVars>(
-                GraphQlQueryEnum.GetBuffs, 
-                new GetBuffsVars(logId, playerId, [.. fightId]), 
+                GraphQlQueryEnum.GetBuffs,
+                new GetBuffsVars(logId, playerId, [.. fightId]),
                 partitionPath: logId + playerId.ToString(),
                 token: token);
 
@@ -130,8 +125,8 @@ namespace SubclassesTracker.GraphQL.Services
         {
             var zones = await graphQLClient.QueryAsync<List<ZoneApiResponse>, GetAllEncountersVars>(
                 GraphQlQueryEnum.GetAllEncounters,
-                new GetAllEncountersVars(), 
-                forceRefresh: true, 
+                new GetAllEncountersVars(),
+                forceRefresh: true,
                 token: token);
 
             return zones;
@@ -141,9 +136,9 @@ namespace SubclassesTracker.GraphQL.Services
             string logId, List<int> fightId, CancellationToken token = default)
         {
             var buffAndEvents = await graphQLClient.QueryAsync<BuffsEventsWithPlayersEsologsResponse, GetBuffsEventsVars>(
-                GraphQlQueryEnum.GetBuffsEvents, 
-                new GetBuffsEventsVars(logId, [.. fightId]), 
-                partitionPath: logId, 
+                GraphQlQueryEnum.GetBuffsEvents,
+                new GetBuffsEventsVars(logId, [.. fightId]),
+                partitionPath: logId,
                 token: token);
 
             return buffAndEvents;

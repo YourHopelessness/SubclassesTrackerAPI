@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Polly;
-using Polly.Extensions.Http;
+using Polly.Timeout;
 using SubclassesTracker.GraphQL.Services;
 using System.Net;
 
@@ -14,6 +14,7 @@ namespace SubclassesTracker.GraphQL
     /// </summary>
     public static class HttpClientBuilderExtensions
     {
+        private readonly static int[] retries = [1, 2, 5, 5, 10];
         /// <summary>
         /// Registers a named HttpClient ("Esologs") with exponential retry,
         /// 429 (TooManyRequests) handling, and a circuit breaker.
@@ -30,6 +31,7 @@ namespace SubclassesTracker.GraphQL
                 var apiUrl = configuration?["LinesConfig:EsoLogsApiUrl"];
 
                 client.BaseAddress = new Uri(apiUrl);
+                client.Timeout = TimeSpan.FromMinutes(retries.Sum());
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
 
                 logger.LogInformation("Esologs HttpClient configured with base address: {Url}", apiUrl);
@@ -56,7 +58,7 @@ namespace SubclassesTracker.GraphQL
                                 r.StatusCode == (HttpStatusCode)429)
                  .WaitAndRetryAsync(
                      retryCount: 5,
-                     sleepDurationProvider: attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+                     sleepDurationProvider: attempt => TimeSpan.FromMinutes(retries[attempt - 1]),
                      onRetryAsync: async (outcome, delay, attempt, _) =>
                      {
                          var status = outcome.Result?.StatusCode.ToString() ?? "exception";
@@ -84,8 +86,18 @@ namespace SubclassesTracker.GraphQL
                       onHalfOpen: () => logger.LogInformation("Circuit half-open. Testing API availability...")
                   );
 
+            // --- Timeout policy ---
+            var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(
+               TimeSpan.FromMinutes(60), // 1 hour timeout
+               TimeoutStrategy.Pessimistic,
+               onTimeoutAsync: (context, timespan, task) =>
+               {
+                   logger.LogWarning("Timeout after {Seconds}s", timespan.TotalSeconds);
+                   return Task.CompletedTask;
+               });
+
             // Combine retry + breaker
-            return Policy.WrapAsync(retryPolicy, circuitBreakerPolicy);
+            return Policy.WrapAsync(retryPolicy, circuitBreakerPolicy, timeoutPolicy);
         }
     }
 }

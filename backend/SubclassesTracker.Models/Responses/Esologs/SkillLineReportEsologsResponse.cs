@@ -32,4 +32,17 @@ namespace SubclassesTracker.Models.Responses.Esologs
         /// </summary>
         public List<SkillLinesApiResponse> TanksLinesModels { get; set; } = [];
     }
+
+    public sealed record SkillLineReportResults
+    {
+        /// <summary>
+        /// Without score cense applied
+        /// </summary>
+        public SkillLineReportEsologsResponse WithoutCense { get; set; }
+
+        /// <summary>
+        /// With score cense applied
+        /// </summary>
+        public SkillLineReportEsologsResponse WithCense { get; set; }
+    }
 }

@@ -14,12 +14,11 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
         /// <param name="zoneId">Id of zone</param>
         /// <param name="token">Cancellation token</param>
         /// <returns></returns>
-        Task<List<SkillLineReportEsologsResponse>> GetSkillLinesAsync(
+        Task<SkillLineReportResults> GetSkillLinesAsync(
             int zoneId,
             int difficulty,
             long startTime,
             long endTime,
-            bool useScoreCense = false,
             CancellationToken token = default);
 
         /// <summary>
@@ -44,51 +43,38 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
     {
         private Dictionary<int, SkillInfo> skillsDict = null!;
 
-        public async Task<List<SkillLineReportEsologsResponse>> GetSkillLinesAsync(
+        public async Task<SkillLineReportResults> GetSkillLinesAsync(
                 int zoneId,
                 int difficulty,
                 long startTime,
                 long endTime,
-                bool useScoreCense = false,
                 CancellationToken token = default)
         {
             skillsDict ??= await loaderService.LoadSkillsAsync(token);
 
-            var filteredReports = await reportService.GetAllFilteredReportAsync(zoneId, difficulty, startTime, endTime, useScoreCense, token);
-            if (filteredReports.Count == 0)
-                return [];
+            var reports = await reportService.GetAllFilteredReportAsync(zoneId, difficulty, startTime, endTime, token);
 
-            var playersByLog = await loaderService.LoadPlayersForReportsAsync(filteredReports, token);
+            var results = new SkillLineReportResults();
 
-            var playerRows = BuildDistinctBestFightRows(filteredReports, playersByLog);
+            // Load players for all reports at once
+            var playersByLog = await reportService.LoadPlayersForReportsAsync(reports.WithoutCense, token);
 
-            await AddMissingBuffRowsAsync(playerRows, token);
+            // Build all player rows for best fights
+            var allPlayerRows = BuildDistinctBestFightRows(reports.WithoutCense, playersByLog);
+            await AddMissingBuffRowsAsync(allPlayerRows, token); // Add missing buff rows
 
-            // Get all roles
-            var roleBuckets = playerRows.GroupBy(r => r.Role)
-                                        .ToDictionary(g => g.Key, g => g.ToList());
+            // Build results without cense filter
+            results.WithoutCense = BuildResult(allPlayerRows, zoneId);
 
-            var result = new List<SkillLineReportEsologsResponse>();
+            // Filter player rows for cense reports only
+            var allowedReportCodes = reports.WithCense.Select(r => r.LogId).ToHashSet();
+            var censePlayerRows = allPlayerRows
+                .Where(p => allowedReportCodes.Contains(p.LogId))
+                .ToList();
 
-            // Filter by the trial id
-            foreach (var group in playerRows.Where(r => r.TrialId == zoneId)
-                                            .GroupBy(r => new { r.TrialId, r.TrialName }))
-            {
-                roleBuckets.TryGetValue(PlayerRole.Dps.ToString(), out var dpsList);
-                roleBuckets.TryGetValue(PlayerRole.Healer.ToString(), out var healList);
-                roleBuckets.TryGetValue(PlayerRole.Tank.ToString(), out var tankList);
+            results.WithCense = BuildResult(censePlayerRows, zoneId);
 
-                result.Add(new SkillLineReportEsologsResponse
-                {
-                    TrialId = group.Key.TrialId,
-                    TrialName = group.Key.TrialName,
-                    DdLinesModels = BuildLines(dpsList ?? Enumerable.Empty<PlayerRow>(), skillsDict),
-                    HealersLinesModels = BuildLines(healList ?? Enumerable.Empty<PlayerRow>(), skillsDict),
-                    TanksLinesModels = BuildLines(tankList ?? Enumerable.Empty<PlayerRow>(), skillsDict)
-                });
-            }
-
-            return result;
+            return results;
         }
 
         public async Task<List<PlayerSkilllinesApiResponse>> GetSkillLinesByReportAsync(
@@ -110,7 +96,7 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                     .Where(x => bossId == null || !(bossId > -1) || x.EncounterId == bossId)])
             };
 
-            var playersByLog = await loaderService.LoadPlayersForReportsAsync(reports, token);
+            var playersByLog = await reportService.LoadPlayersForReportsAsync(reports, token);
             var rows = BuildDistinctBestFightRows(reports, playersByLog, false);
 
             await AddMissingBuffRowsAsync(rows, token); // Less than 3 lines
@@ -144,6 +130,42 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
                 .ToList();
 
             return result;
+        }
+
+        private SkillLineReportEsologsResponse BuildResult(IEnumerable<PlayerRow> playerRows, int zoneId)
+        {
+            var roleBuckets = playerRows
+                .GroupBy(r => r.Role)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            var result = new List<SkillLineReportEsologsResponse>();
+
+            foreach (var group in playerRows
+                         .Where(r => r.TrialId == zoneId)
+                         .GroupBy(r => new { r.TrialId, r.TrialName }))
+            {
+                roleBuckets.TryGetValue(PlayerRole.Dps.ToString(), out var dpsList);
+                roleBuckets.TryGetValue(PlayerRole.Healer.ToString(), out var healList);
+                roleBuckets.TryGetValue(PlayerRole.Tank.ToString(), out var tankList);
+
+                result.Add(new SkillLineReportEsologsResponse
+                {
+                    TrialId = group.Key.TrialId,
+                    TrialName = group.Key.TrialName,
+                    DdLinesModels = BuildLines(dpsList ?? Enumerable.Empty<PlayerRow>(), skillsDict),
+                    HealersLinesModels = BuildLines(healList ?? Enumerable.Empty<PlayerRow>(), skillsDict),
+                    TanksLinesModels = BuildLines(tankList ?? Enumerable.Empty<PlayerRow>(), skillsDict)
+                });
+            }
+
+            return new SkillLineReportEsologsResponse
+            {
+                TrialId = zoneId,
+                TrialName = result.First().TrialName,
+                DdLinesModels = [.. result.SelectMany(l => l.DdLinesModels)],
+                HealersLinesModels = [.. result.SelectMany(l => l.HealersLinesModels)],
+                TanksLinesModels = [.. result.SelectMany(l => l.TanksLinesModels)]
+            };
         }
     }
 }
