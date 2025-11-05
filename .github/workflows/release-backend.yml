@@ -95,7 +95,12 @@ jobs:
           username: ${{ secrets.YOKO_USER }}
           key: ${{ secrets.YOKO_KEY }}
           script: | 
-            sudo chown -R ${{ secrets.YOKO_USER_API }}:${{ secrets.YOKO_USER_API }} "${{ secrets.YOKO_TARGET }}/publish" || true
+            TARGET="${{ secrets.YOKO_TARGET }}/publish"
+            APPUSER="${{ secrets.YOKO_USER_API }}"
+            
+            sudo mkdir -p $TARGET/Saves
+            sudo chown -R $APPUSER:$APPUSER "$TARGET" || true
+            sudo chmod -R 750 "$TARGET/Saves"
       
      # 3) Health check
       - name: Check service status
