@@ -7,7 +7,7 @@ namespace SubclassesTracker.Database.Entity
     /// Represents icons of the skills
     /// </summary>
     [Table("icon")]
-    public class Icon
+    public class Icon : IHaveIdentifier
     {
         /// <summary>
         /// Unique identifier
@@ -25,6 +25,6 @@ namespace SubclassesTracker.Database.Entity
         /// <summary>
         /// Collection of skill lines
         /// </summary>
-        public ICollection<SkillLine> SkillLines { get; set; }
+        public ICollection<SkillLine> SkillLines { get; set; } = null!;
     }
 }

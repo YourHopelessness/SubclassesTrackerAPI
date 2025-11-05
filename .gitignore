@@ -4,3 +4,8 @@
 
 /.vs
 /.config
+/backend/.vs
+**/obj
+**/bin
+*.sqbpro
+*.user

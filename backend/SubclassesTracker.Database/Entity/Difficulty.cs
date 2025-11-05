@@ -7,7 +7,7 @@ namespace SubclassesTracker.Database.Entity
     /// Represents a difficulty level for zones in the game, such as Normal or Veteran Hard mode.
     /// </summary>
     [Table("difficulty")]
-    public class Difficulty
+    public class Difficulty : IHaveIdentifier
     {
         /// <summary>
         /// Unique identifier for the difficulty level.
@@ -26,6 +26,6 @@ namespace SubclassesTracker.Database.Entity
         /// <summary>
         /// Collection of zone difficulties associated with this difficulty level.
         /// </summary>
-        public ICollection<ZoneDifficulty> ZoneDifficulties { get; set; } = new HashSet<ZoneDifficulty>();
+        public ICollection<ZoneDifficulty> ZoneDifficulties { get; set; } = null!;
     }
 }

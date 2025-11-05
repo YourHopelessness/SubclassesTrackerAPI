@@ -6,7 +6,8 @@ on:
     tags:
       - 'backend-release-*'
 
-jobs:     
+jobs:  
+  # Build the app
   build:
     runs-on: ubuntu-latest
     defaults:
@@ -22,7 +23,8 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore SubclassesTrackerExtension.sln
-        
+  
+  # Make release build
   publish:
     needs: build
     runs-on: ubuntu-latest
@@ -38,14 +40,15 @@ jobs:
           dotnet-version: '9.0.x'
           
       - name: Publish
-        run: dotnet publish SubclassesTracker.Api.csproj -c Release -o publish
+        run: dotnet publish SubclassesTracker.Api/SubclassesTracker.Api.csproj -c Release -o publish
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: SubclassesTracker.Api
           path: backend/publish
-          
+    
+  # Deploy to the server
   deploy:
     needs: publish
     runs-on: ubuntu-latest
@@ -84,3 +87,45 @@ jobs:
             set -e
             sudo systemctl start subclasses-api
             sudo systemctl status subclasses-api --no-pager
+
+      - name: Change ownership
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.YOKO_HOST }}
+          username: ${{ secrets.YOKO_USER }}
+          key: ${{ secrets.YOKO_KEY }}
+          script: | 
+            TARGET="${{ secrets.YOKO_TARGET }}/publish"
+            APPUSER="${{ secrets.YOKO_USER_API }}"
+            
+            sudo mkdir -p $TARGET/Saves
+            sudo chown -R $APPUSER:$APPUSER "$TARGET" || true
+            sudo chmod -R 750 "$TARGET/Saves"
+      
+     # 3) Health check
+      - name: Check service status
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+            host: ${{ secrets.YOKO_HOST }}
+            username: ${{ secrets.YOKO_USER }}
+            key: ${{ secrets.YOKO_KEY }}
+            script: |
+                echo "Waiting 30 seconds for API to start..."
+                sleep 30
+          
+                MAX_RETRIES=10
+                RETRY_DELAY=5
+                URL="http://127.0.0.1:5000/api/HealthCheck/health"
+
+                for i in $(seq 1 $MAX_RETRIES); do
+                  echo "Attempt $i/$MAX_RETRIES: Checking $URL..."
+                  if curl --fail --silent --max-time 5 "$URL" > /dev/null; then
+                    echo "API is healthy!"
+                    exit 0
+                  fi
+                  echo "API not ready yet, retrying in $RETRY_DELAY seconds..."
+                  sleep $RETRY_DELAY
+                done
+          
+                echo "API did not become healthy after $MAX_RETRIES attempts"
+                exit 1
