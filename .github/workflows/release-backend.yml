@@ -94,8 +94,8 @@ jobs:
           host: ${{ secrets.YOKO_HOST }}
           username: ${{ secrets.YOKO_USER }}
           key: ${{ secrets.YOKO_KEY }}
-          script: |  
-            sudo chown -R ${{ secrets.YOKO_USER_API }}:${{ secrets.YOKO_USER_API }} ${{ secrets.YOKO_TARGET }}/publish
+          script: | 
+            sudo chown -R ${{ secrets.YOKO_USER_API }}:${{ secrets.YOKO_USER_API }} "${{ secrets.YOKO_TARGET }}/publish" || true
       
      # 3) Health check
       - name: Check service status
@@ -105,4 +105,22 @@ jobs:
             username: ${{ secrets.YOKO_USER }}
             key: ${{ secrets.YOKO_KEY }}
             script: |
-                curl --fail --silent http://localhost/api/HealthCheck/health || exit 1
+                echo "Waiting 30 seconds for API to start..."
+                sleep 30
+          
+                MAX_RETRIES=10
+                RETRY_DELAY=5
+                URL="http://localhost/api/HealthCheck/health"
+
+                for i in $(seq 1 $MAX_RETRIES); do
+                  echo "Attempt $i/$MAX_RETRIES: Checking $URL..."
+                  if curl --fail --silent --max-time 5 "$URL" > /dev/null; then
+                    echo "API is healthy!"
+                    exit 0
+                  fi
+                  echo "API not ready yet, retrying in $RETRY_DELAY seconds..."
+                  sleep $RETRY_DELAY
+                done
+          
+                echo "API did not become healthy after $MAX_RETRIES attempts"
+                exit 1
