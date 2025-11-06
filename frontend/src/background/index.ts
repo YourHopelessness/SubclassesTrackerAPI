@@ -1,9 +1,7 @@
 /**
  * Background / service‑worker entry point.
  * Listens for SPA navigation on *.esologs.com/reports/*
- * and injects the compiled content‑script. After the file
- * is present in the tab we call `window.esologsInjectLines(url)`
- * from that same page context.
+ * and injects the compiled content‑script. 
  */
 
 import { getTokens } from '../shared/storage';
