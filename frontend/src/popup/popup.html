@@ -9,13 +9,22 @@
   <body class="p-4 min-w-[260px] font-sans">
     <h1 class="text-lg font-bold mb-2">ESO Logs Helper</h1>
     <div id="state"></div>
+
     <template id="askId">
       <label class="block mb-2 text-sm">Enter ESO Logs Client ID</label>
-      <input id="clientId" class="border px-2 py-1 w-full mb-2" />
+      <input id="clientId" type="text" class="border px-2 py-1 w-full mb-2" />
       <button id="save" class="border rounded px-3 py-1">Save</button>
     </template>
+
     <template id="loggedIn">
-      <p class="text-green-700">Tokens stored ✔</p>
+      <div class="mb-2 text-sm">
+        <p id="clientIdLabel"></p>
+        <p class="text-green-700">Tokens stored ✔</p>
+      </div>
+      <div class="flex gap-2">
+        <button id="relogin" class="border rounded px-3 py-1">Re-login</button>
+        <button id="reset" class="border rounded px-3 py-1 bg-red-600">Reset</button>
+      </div>
     </template>
   </body>
 </html>

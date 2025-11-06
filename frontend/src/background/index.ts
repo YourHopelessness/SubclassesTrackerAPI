@@ -22,7 +22,6 @@ const REPORT_MATCHER = [
 /* ------------------------------------------------------------------ */
 /* RUNTIME MESSAGING – TOKEN / LOGIN HANDLERS                         */
 /* ------------------------------------------------------------------ */
-
 chrome.runtime.onMessage.addListener(
   (msg: IncomingMessage, _sender, sendResponse) => {
     if (isMessage(msg, ESO_PAGE_READY)) {
@@ -58,7 +57,6 @@ chrome.runtime.onMessage.addListener(
 /* ------------------------------------------------------------------ */
 /* SPA NAVIGATION LISTENERS – inject content script on every visit    */
 /* ------------------------------------------------------------------ */
-
 chrome.webNavigation.onHistoryStateUpdated.addListener(
   (d) => {
     if (d.frameId !== 0) return; 
@@ -78,7 +76,6 @@ chrome.webNavigation.onCompleted.addListener(
 /* ------------------------------------------------------------------ */
 /* One‑time installation hook                                         */
 /* ------------------------------------------------------------------ */
-
 chrome.runtime.onInstalled.addListener(() => {
   console.log('[ESO Helper] installed / updated');
   void ensureAuth(false); // silent token check, no popup on install

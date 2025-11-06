@@ -1,6 +1,6 @@
 import { EsoSignature } from '../../types';
 import { getLookupName } from '../../nameUtils';
-import { applyToElement } from '../base';
+import { applyToElement } from '../applier';
 
 /**
  * Process "All Friendlies" table

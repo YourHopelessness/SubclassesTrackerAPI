@@ -57,7 +57,9 @@ export async function apiFetch(path: string, init: RequestInit = {}) {
     tok = await refresh(tok);
     if (!tok) throw new Error('Refresh failed');
     headers.set('Authorization', `Bearer ${tok.accessToken}`);
+    
     return fetch(`${API}${path}`, { ...init, headers });
   }
+
   return res;
 }

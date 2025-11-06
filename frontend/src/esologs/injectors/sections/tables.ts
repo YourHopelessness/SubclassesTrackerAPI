@@ -1,6 +1,6 @@
 import { EsoSignature } from '../../types';
 import { getLookupName } from '../../nameUtils';
-import { applyToElement } from '../base';
+import { applyToElement } from '../applier';
 import { TABLE_ACTOR_LINKS_SEL } from '../../domSelectors';
 
 /**

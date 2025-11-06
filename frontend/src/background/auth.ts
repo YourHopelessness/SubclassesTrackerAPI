@@ -90,11 +90,15 @@ async function doInteractiveAuth(): Promise<Tokens | null> {
     if (!tokenResp.ok) throw new Error('exchange HTTP ' + tokenResp.status);
     const data = await safeJson(tokenResp);
     const tokens = normalizeTokens(data);
+
     await saveTokens(tokens);
+    chrome.runtime.sendMessage({ type: 'AUTH_TOKEN_SAVED' });
+
     return tokens;
   } catch (err) {
     console.error('[auth] exchange failed', err);
     clearClientId();
+    chrome.runtime.sendMessage({ type: 'AUTH_FAILED' });
 
     return null;
   }
@@ -108,6 +112,7 @@ function normalizeTokens(raw: any): Tokens {
     : raw.expires_in
     ? now + Number(raw.expires_in) * 1000
     : undefined;
+    
   return {
     accessToken: raw.access_token ?? raw.AccessToken ?? raw.token ?? '',
     refreshToken: raw.refresh_token ?? raw.RefreshToken,
