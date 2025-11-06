@@ -1,22 +1,16 @@
-import { defineConfig } from "vite";
-import webExtension, { readJsonFile } from "vite-plugin-web-extension";
-
-function generateManifest() {
-  const manifest = readJsonFile("src/manifest.json");
-  const pkg = readJsonFile("package.json");
-  return {
-    name: pkg.name,
-    description: pkg.description,
-    version: pkg.version,
-    ...manifest,
-  };
-}
+import { defineConfig } from 'vite';
+import webExtension from 'vite-plugin-web-extension';
+import fs from 'fs';
 
 export default defineConfig({
   plugins: [
+    //@ts-ignore
     webExtension({
-      manifest: generateManifest,
-      watchFilePaths: ["package.json", "manifest.json"],
+      manifest: () => JSON.parse(fs.readFileSync('src/manifest.json', 'utf8')),
+      watchFilePaths: ['src/manifest.json']
     }),
   ],
+  build: {
+    target: 'chrome114', 
+  },
 });

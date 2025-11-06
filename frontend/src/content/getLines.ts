@@ -1,4 +1,4 @@
-import { apiFetch } from "../shared/api";
+import { apiFetch, safeJson } from "../shared/api";
 import { PlayerSkilllinesApiResponse } from "../types/models";
 
 /** Helper: build API URL and fetch skill lines for current page. */
@@ -20,5 +20,11 @@ export async function getPlayersLines(
   const res = await apiFetch(apiUrl);
   if (!res.ok) throw new Error(res.statusText);
 
-  return (await res.json()) as PlayerSkilllinesApiResponse[];
+  const data = await safeJson<PlayerSkilllinesApiResponse[]>(res);
+  if (!data) {
+    console.warn('[ESOlogs enhancer] Empty JSON from API');
+    return [];
+  }
+
+  return data;
 }

@@ -22,6 +22,28 @@ async function refresh(tokens: Tokens): Promise<Tokens | null> {
   return next;
 }
 
+/**
+ * Safe fetching api response
+ * @param resp Response
+ * @returns Response body as T
+ */
+export async function safeJson<T>(resp: Response): Promise<T | null> {
+  const text = await resp.text();
+  if (!text) return null; // empty response
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    console.warn('[ESO Helper] JSON parse failed', err, text);
+    return null;
+  }
+}
+
+/**
+ * Fetch api response
+ * @param path path to api
+ * @param init initial request
+ * @returns response from api
+ */
 export async function apiFetch(path: string, init: RequestInit = {}) {
   let tok = await getTokens();
   if (!tok) throw new Error('No tokens stored');
@@ -35,7 +57,9 @@ export async function apiFetch(path: string, init: RequestInit = {}) {
     tok = await refresh(tok);
     if (!tok) throw new Error('Refresh failed');
     headers.set('Authorization', `Bearer ${tok.accessToken}`);
+    
     return fetch(`${API}${path}`, { ...init, headers });
   }
+
   return res;
 }

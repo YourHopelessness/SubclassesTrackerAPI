@@ -1,6 +1,7 @@
 name: Build Browser Extension (Vite)
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - 'frontend-release-*'
