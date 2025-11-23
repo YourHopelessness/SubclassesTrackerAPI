@@ -8,7 +8,7 @@ namespace SubclassesTracker.Caching.Services.ObjectSerilization
         {
             services.AddScoped<IObjectFlattener, ObjectFlattenerService>();
             services.AddScoped<IObjectUnflattener, ObjectUnflattenerService>();
-            
+
             return services;
         }
     }

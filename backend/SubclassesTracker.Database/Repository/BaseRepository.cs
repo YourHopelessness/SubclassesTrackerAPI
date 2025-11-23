@@ -41,7 +41,7 @@ namespace SubclassesTracker.Database.Repository
         IQueryable<T> GetAll(bool noTracking = true);
     }
 
-    public class BaseRepository<T>(EsoContext context) : IBaseRepository<T> 
+    public class BaseRepository<T>(EsoContext context) : IBaseRepository<T>
         where T : class, IHaveIdentifier, new()
     {
         public IQueryable<T> GetList(Expression<Func<T, bool>> predicate, bool noTracking = true)

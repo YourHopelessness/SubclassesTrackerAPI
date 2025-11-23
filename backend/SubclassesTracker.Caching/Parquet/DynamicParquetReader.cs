@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using Parquet;
+﻿using Parquet;
 using SubclassesTracker.Caching.Services.ObjectSerilization;
 
 namespace SubclassesTracker.Caching.Parquet
@@ -12,7 +11,7 @@ namespace SubclassesTracker.Caching.Parquet
         /// <param name="inputPath">Path to the Parquet file</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>Data read from the Parquet file as a list of schema</returns>
-        Task<List<T>> ReadTypedAsync<T>(
+        Task<List<T>?> ReadTypedAsync<T>(
             string relativePath,
             CancellationToken ct = default)
             where T : class, new();
@@ -24,11 +23,13 @@ namespace SubclassesTracker.Caching.Parquet
     public class DynamicParquetReader(
         IObjectUnflattener unflattener) : IDynamicParquetReader
     {
-        public async Task<List<T>> ReadTypedAsync<T>(
+        public async Task<List<T>?> ReadTypedAsync<T>(
             string relativePath,
             CancellationToken ct = default)
             where T : class, new()
         {
+            if (!File.Exists(relativePath)) return null;
+
             var results = new List<T>();
 
             using var fs = File.OpenRead(relativePath);
