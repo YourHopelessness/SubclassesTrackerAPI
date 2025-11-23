@@ -12,6 +12,7 @@ export function clearClientId() {
 
 export async function getClientId(): Promise<string | null> {
   const { clientId } = await chrome.storage.local.get('clientId');
+
   return clientId ?? null;
 }
 
@@ -21,9 +22,12 @@ export function saveTokens(t: Tokens) {
 
 export async function getTokens(): Promise<Tokens | null> {
   const { tokens } = await chrome.storage.local.get('tokens');
+
   return tokens ?? null;
 }
 
 export function clearTokens() {
-  return chrome.storage.local.remove(['tokens']);
+  chrome.storage.local.remove(['tokens'], () => {
+    console.log('Tokens resetted');
+  });
 }
