@@ -44,9 +44,9 @@ namespace SubclassesTracker.Api.BackgroundQueue
         /// <param name="ct"></param>
         /// <returns></returns>
         ValueTask<(
-         Guid, 
-         Func<IServiceProvider, Task>, 
-         TaskCompletionSource<object?>)> 
+         Guid,
+         Func<IServiceProvider, Task>,
+         TaskCompletionSource<object?>)>
             Dequeue(CancellationToken ct);
     }
 }

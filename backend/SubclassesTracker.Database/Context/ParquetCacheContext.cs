@@ -9,7 +9,7 @@ namespace SubclassesTracker.Database.Context
         public DbSet<Partition> Partitions { get; set; } = null!;
         public DbSet<Dataset> Datasets { get; set; } = null!;
         public DbSet<RequestSnapshot> RequestSnapshots { get; set; } = null!;
-        
+
         protected override void OnModelCreating(ModelBuilder b)
         {
             b.Entity<FileEntry>()

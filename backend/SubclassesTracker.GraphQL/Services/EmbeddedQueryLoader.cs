@@ -22,7 +22,7 @@ namespace SubclassesTracker.GraphQL.Services
         public async Task<string> LoadAsync(string queryName, CancellationToken token = default)
         {
             var name = _asm.GetManifestResourceNames()
-                .FirstOrDefault(x => x.EndsWith($"{queryName}.graphql", StringComparison.Ordinal)) 
+                .FirstOrDefault(x => x.EndsWith($"{queryName}.graphql", StringComparison.Ordinal))
                 ?? throw new FileNotFoundException($"GraphQL query '{queryName}' not found in resources.");
 
             await using var s = _asm.GetManifestResourceStream(name)

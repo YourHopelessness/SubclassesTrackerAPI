@@ -50,7 +50,7 @@ namespace SubclassesTracker.Database.CacheEntities
         /// <summary>
         /// Full path to the file
         /// </summary>
-        public string FullPath => Partition is not null 
+        public string FullPath => Partition is not null
             ? Path.Combine(Dataset.RootPath, Partition!.Path, FileName)
             : Path.Combine(Dataset.RootPath, FileName);
 

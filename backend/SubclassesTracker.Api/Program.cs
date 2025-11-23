@@ -1,7 +1,10 @@
-﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
-using FluentValidation;
+﻿using FluentValidation;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry;
+using OpenTelemetry.Instrumentation.Http;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 using SQLitePCL;
 using SubclassesTracker.Api.BackgroundQueue;
@@ -18,7 +21,6 @@ using SubclassesTracker.Caching.Parquet;
 using SubclassesTracker.Caching.Services;
 using SubclassesTracker.Caching.Services.ObjectSerilization;
 using SubclassesTracker.Database.Context;
-using SubclassesTracker.Database.Entity;
 using SubclassesTracker.Database.Repository;
 using SubclassesTracker.GraphQL;
 using SubclassesTracker.GraphQL.Services;
@@ -109,6 +111,31 @@ builder.Services.AddScoped<JobRacesDataCollection>();
 // Add controllers
 builder.Services.AddControllers();
 
+builder.Services.AddHealthChecks();
+
+// Add OpenTelemetry logging, metrics and tracing
+builder.Services.Configure<HttpClientTraceInstrumentationOptions>(o =>
+{
+    o.RecordException = true;
+});
+builder.Logging.ClearProviders();
+builder.Logging.AddJsonConsole();
+builder.Logging.AddOpenTelemetry();
+
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(m =>
+    {
+        m.AddHttpClientInstrumentation();
+        m.AddRuntimeInstrumentation();
+    })
+    .WithTracing(t =>
+    {
+        t.AddAspNetCoreInstrumentation();
+        t.AddHttpClientInstrumentation();
+    })
+    .UseOtlpExporter();
+
+// -------- Build and run the app --------
 var app = builder.Build();
 
 // Apply migrations automatically
@@ -144,5 +171,7 @@ if (!app.Environment.IsDevelopment())
 app.UseRouting();
 app.UseMiddleware<EnsureFreshTokenMiddleware>();
 app.MapControllers();
+
+app.MapHealthChecks("/api/HealthCheck/health");
 
 app.Run();

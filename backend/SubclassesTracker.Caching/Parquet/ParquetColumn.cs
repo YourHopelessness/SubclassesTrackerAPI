@@ -1,5 +1,4 @@
-﻿using Parquet.Schema;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Reflection;
 
 namespace SubclassesTracker.Caching.Parquet

@@ -51,7 +51,7 @@ namespace SubclassesTracker.Api.Controllers
         /// <returns></returns>
         [HttpGet("getPlayerBuffs")]
         public async Task<IActionResult> GetPlayerBuffsAsync(
-            [FromQuery] string logId, 
+            [FromQuery] string logId,
             [FromQuery] int playerId,
             CancellationToken token = default)
         {

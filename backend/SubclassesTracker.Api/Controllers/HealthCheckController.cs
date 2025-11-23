@@ -9,6 +9,7 @@ namespace SubclassesTracker.Api.Controllers
     /// Controller for health checks.
     /// </summary>
     [Route("api/[controller]")]
+    [AllowAnonymous]
     public class HealthCheckController : ControllerBase
     {
         [HttpGet("health")]

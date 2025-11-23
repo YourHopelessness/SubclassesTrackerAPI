@@ -52,15 +52,13 @@ namespace SubclassesTracker.Caching.Services
                 .ThenInclude(f => f.Dataset)
                 .FirstOrDefaultAsync(r => r.QueryName == queryName && r.VarsHash == hash, token);
 
-            if (snapshot is null)
-                return null;
+            if (snapshot is null) return null;
 
             var file = snapshot.FileEntries
                 .OrderByDescending(f => f.CachedAt)
                 .FirstOrDefault(f => f.CachedAt + TimeSpan.FromSeconds(f.Ttl) > DateTimeOffset.UtcNow);
 
-            if (file == null)
-                return null;
+            if (file == null) return new();
 
             // Determine if T is a collection type
             var tType = typeof(T);
@@ -75,15 +73,15 @@ namespace SubclassesTracker.Caching.Services
             await task.ConfigureAwait(false);
 
             var resultProperty = task.GetType().GetProperty("Result")!;
-            var list = (IList)resultProperty.GetValue(task)!;
+            var list = (IList?)resultProperty.GetValue(task);
+
+            if (list is null) return null;
 
             // Return as collection
-            if (isCollection)
-                return list as T;
+            if (isCollection) return list as T;
 
             // Return first item or null
-            if (list.Count > 0)
-                return list[0] as T;
+            if (list.Count > 0) return list[0] as T;
 
             return null;
         }
