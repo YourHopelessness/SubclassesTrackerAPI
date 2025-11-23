@@ -17,9 +17,6 @@ namespace SubclassesTracker.Database.Context
         protected override void OnModelCreating(ModelBuilder b)
         {
             b.Entity<ZoneDifficulty>()
-                .HasKey(zd => new { zd.ZoneId, zd.DifficultyId });
-
-            b.Entity<ZoneDifficulty>()
                 .HasOne(zd => zd.Zone)
                 .WithMany(z => z.ZoneDifficulties)
                 .HasForeignKey(zd => zd.ZoneId);
@@ -48,6 +45,11 @@ namespace SubclassesTracker.Database.Context
                 .HasOne(sl => sl.LineType)
                 .WithMany(lt => lt.SkillLines)
                 .HasForeignKey(sl => sl.LineTypeId);
+
+            b.Entity<SkillLine>()
+                .HasOne(sl => sl.Class)
+                .WithMany(lt => lt.SkillLines)
+                .HasForeignKey(sl => sl.ClassTypeId);
 
             b.Entity<SkillTreeEntry>()
                 .HasOne(st => st.SkillLine)

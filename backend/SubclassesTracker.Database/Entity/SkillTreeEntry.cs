@@ -7,7 +7,7 @@ namespace SubclassesTracker.Database.Entity
     /// Represents an entry in the skill tree, linking abilities to skill lines.
     /// </summary>
     [Table("skillTree")]
-    public class SkillTreeEntry
+    public class SkillTreeEntry : IHaveIdentifier
     {
         /// <summary>
         /// Unique identifier for the skill tree entry.
@@ -20,7 +20,7 @@ namespace SubclassesTracker.Database.Entity
         /// Identifier for the ability associated with this skill tree entry.
         /// </summary>
         [Column("abilityId")]
-        public int? AbilityId { get; set; }
+        public int AbilityId { get; set; }
 
         /// <summary>
         /// Identifier for the skill line this entry belongs to.

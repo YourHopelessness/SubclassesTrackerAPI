@@ -1,15 +1,29 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11217.181 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubclassesTracker.Api", "SubclassesTracker.Api.csproj", "{537F1E69-56CE-4D49-9CAC-D48E4233DD47}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\workflows\release-backend.yml = ..\.github\workflows\release-backend.yml
+		..\.github\workflows\release-frontend.yml = ..\.github\workflows\release-frontend.yml
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubclassesTracker.Database", "SubclassesTracker.Database\SubclassesTracker.Database.csproj", "{5E767E61-22AC-C9A2-451B-A2C2E3257DC4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SubclassesTracker.Api", "SubclassesTracker.Api", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubclassesTracker.Caching", "SubclassesTracker.Caching\SubclassesTracker.Caching.csproj", "{BCA6FAC6-0090-550E-5FA6-53D4F23D5E99}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubclassesTracker.GraphQL", "SubclassesTracker.GraphQL\SubclassesTracker.GraphQL.csproj", "{37F87C46-ACF0-C44A-D0B0-F402BFA9F473}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubclassesTracker.Models", "SubclassesTracker.Models\SubclassesTracker.Models.csproj", "{9F92420A-FC58-65DC-5E97-44E432DE0D71}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubclassesTracker.Api", "SubclassesTracker.Api\SubclassesTracker.Api.csproj", "{BD813669-2713-A987-B112-8560B3C60965}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubclassesTracker.AspireHost", "SubclassesTracker.AspireHost\SubclassesTracker.AspireHost.csproj", "{61FC329C-FF41-4F02-9136-0C7422C494A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubclassesTracker.CleanupService", "SubclassesTracker.CleanupService\SubclassesTracker.CleanupService.csproj", "{F2888591-C050-3BEE-D82A-051C568E5A00}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,22 +31,46 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{537F1E69-56CE-4D49-9CAC-D48E4233DD47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{537F1E69-56CE-4D49-9CAC-D48E4233DD47}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{537F1E69-56CE-4D49-9CAC-D48E4233DD47}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{537F1E69-56CE-4D49-9CAC-D48E4233DD47}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5E767E61-22AC-C9A2-451B-A2C2E3257DC4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5E767E61-22AC-C9A2-451B-A2C2E3257DC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5E767E61-22AC-C9A2-451B-A2C2E3257DC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5E767E61-22AC-C9A2-451B-A2C2E3257DC4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BCA6FAC6-0090-550E-5FA6-53D4F23D5E99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCA6FAC6-0090-550E-5FA6-53D4F23D5E99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCA6FAC6-0090-550E-5FA6-53D4F23D5E99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCA6FAC6-0090-550E-5FA6-53D4F23D5E99}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37F87C46-ACF0-C44A-D0B0-F402BFA9F473}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37F87C46-ACF0-C44A-D0B0-F402BFA9F473}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37F87C46-ACF0-C44A-D0B0-F402BFA9F473}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37F87C46-ACF0-C44A-D0B0-F402BFA9F473}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F92420A-FC58-65DC-5E97-44E432DE0D71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F92420A-FC58-65DC-5E97-44E432DE0D71}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F92420A-FC58-65DC-5E97-44E432DE0D71}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F92420A-FC58-65DC-5E97-44E432DE0D71}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD813669-2713-A987-B112-8560B3C60965}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD813669-2713-A987-B112-8560B3C60965}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD813669-2713-A987-B112-8560B3C60965}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD813669-2713-A987-B112-8560B3C60965}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61FC329C-FF41-4F02-9136-0C7422C494A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61FC329C-FF41-4F02-9136-0C7422C494A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61FC329C-FF41-4F02-9136-0C7422C494A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61FC329C-FF41-4F02-9136-0C7422C494A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F2888591-C050-3BEE-D82A-051C568E5A00}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2888591-C050-3BEE-D82A-051C568E5A00}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2888591-C050-3BEE-D82A-051C568E5A00}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2888591-C050-3BEE-D82A-051C568E5A00}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{537F1E69-56CE-4D49-9CAC-D48E4233DD47} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{5E767E61-22AC-C9A2-451B-A2C2E3257DC4} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
+		{BCA6FAC6-0090-550E-5FA6-53D4F23D5E99} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{37F87C46-ACF0-C44A-D0B0-F402BFA9F473} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{9F92420A-FC58-65DC-5E97-44E432DE0D71} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{BD813669-2713-A987-B112-8560B3C60965} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{F2888591-C050-3BEE-D82A-051C568E5A00} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CFFA64D4-E337-4353-8819-9AC680E0B422}

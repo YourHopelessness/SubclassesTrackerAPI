@@ -1,0 +1,14 @@
+query GetBuffsEvents($Code: String!, $FightIds: [Int!]!){
+  reportData {
+    report(code: $Code) {
+      playerDetails (
+        fightIDs: $FightIds)
+      events(
+        fightIDs: $FightIds,
+        dataType: CombatantInfo
+      ) {
+        data 
+      }
+    }
+  }
+}

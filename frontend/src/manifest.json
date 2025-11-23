@@ -1,41 +1,31 @@
 {
   "key": "MIICdQIBADANBgkqhkiG9w0BAQEFAASCAl8wggJbAgEAAoGBALSKnIUl9TWAqq1729cw1Iymw60Ny7gahiiZkO3KicaVEyzf1FjaANgLvqOQxgbsAncji3xcy356ah5rEP5ZJ9vDAQMUvMo2rVijLoZuK973f+SKL5ZzEmuUUxaJKZPb23KWn8ulMeBRKAw7A6YSmTQutExByxhQXqnxxotEAFP9AgMBAAECgYAXVf9LOo/KXZoyGFtfIkGm+Hs8aBcX8d27a7YO9mn+kBBNcZUJ8wu+4S3ACJuAE4tyCNcjuP7Yl0wWKHKm3bFH/9lmpbXPpYyT49LCloCOPEZkj+6fQm3CK+jQvBYiboNEQFFxXYjDiVhykTxJ8du3BWofiQKpU1xC/sTsOilcoQJBAOix7UdQSEXMm4U7ykSIlVaJkg3/DB1DmwVwgt6Z0TK9XVK1MFtU85zCtSgjclYRing+IS98kulPIWhndLjzOhkCQQDGn4SO4h2wE+tfcnc4n3zbqYGHbRjTEoVwe78Q9BPf2z3svSJJCwoTcMvi8zSbwC3stBeTOParV4IoulrW6u2FAkBWWplkyq1XgdwBMLQahNlu2PTjzs+vGISyGxPmCg0xmEbGx8jfTAJwHW3fLHBk8nOBtgTYu5FFlgEe3q3ZaSIZAkAbB+SLaXxu1RcoQzS0cQgWAOiO3KsPNqsQVtb24LC/u1+fE1JSLH1vjd9BgKW9OJdHam726z6urNca4dmw/AHdAkA5o5B4ojmXY7p5Qde9D78h5hR9ATKnsPthCTvisjJCYBfaZGjDbeUp9XqBme56lujXvD/c84xTrcFcWbkEzY+X",
-  "{{chrome}}.manifest_version": 3,
-  "{{firefox}}.manifest_version": 2,
-  "icons": {
-    "16": "icon/16.png",
-    "32": "icon/32.png",
-    "48": "icon/48.png",
-    "96": "icon/96.png",
-    "128": "icon/128.png"
-  },
-  "version" : "0.0.1",
-  "{{chrome}}.action": {
-    "default_popup": "src/popup/popup.html"
-  },
-  "{{firefox}}.browser_action": {
-    "default_popup": "src/popup/popup.html"
-  },
-  "background": {
-    "{{chrome}}.service_worker": "src/background/index.ts",
-    "{{firefox}}.scripts": ["src/background/index.ts"],
-    "{{chrome}}.type": "module"
-  },
+  "manifest_version": 3,
+  "name": "ESOlogs Helper",
   "description": "Injects parsed ESO Logs classes data into the site.",
-  "permissions": ["storage", "identity", "activeTab", "webNavigation", "scripting"],
-  "host_permissions": [
-    "http://yokocodev.site:80*",
-    "https://*.esologs.com/*"
-  ],
-  "content_scripts": [
-    {
+  "version": "1.0.1",
+  "background": {
+    "service_worker": "src/background/index.ts",
+    "type": "module"
+  },
+  "content_scripts": [{
       "matches": ["https://*.esologs.com/reports/*"],
-      "js": ["src/content/esologs.ts"],
+      "js": ["src/content/inject.ts", "src/content/esologs.ts"],
       "run_at": "document_end"
     }
   ],
-  "{{chrome}}.optional_permissions": ["cookies"],
-  "{{firefox}}.browser_specific_settings": {
-    "gecko": { "id": "esologs-helper@example.com" }
-  }
+  "action": {
+    "default_popup": "src/popup/popup.html"
+  },
+  "permissions": [
+    "storage",
+    "identity",
+    "activeTab",
+    "webNavigation",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://yokocodev.site/*",
+    "https://*.esologs.com/*"
+  ]
 }

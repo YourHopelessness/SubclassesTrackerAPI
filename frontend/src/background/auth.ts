@@ -1,4 +1,5 @@
 import { API } from '../constants';
+import { safeJson } from '../shared/api';
 import { clearClientId, getClientId, getTokens, saveTokens } from '../shared/storage';
 import type { Tokens } from '../types/tokens';
 import { waitForClientIdFromStorage } from './client';
@@ -20,6 +21,7 @@ export async function startInteractiveAuth(): Promise<Tokens | null> {
   authInFlight = doInteractiveAuth().finally(() => {
     authInFlight = null;
   });
+
   return authInFlight;
 }
 
@@ -46,7 +48,7 @@ async function doInteractiveAuth(): Promise<Tokens | null> {
   try {
     const r = await fetch(oauthUrlEndpoint);
     if (!r.ok) throw new Error('oauth/url HTTP ' + r.status);
-    const j = await r.json();
+    const j = await safeJson<any>(r);
     oauthUrl = j.url;
   } catch (err) {
     console.error('[auth] failed to get oauth url', err);
@@ -86,13 +88,17 @@ async function doInteractiveAuth(): Promise<Tokens | null> {
     });
 
     if (!tokenResp.ok) throw new Error('exchange HTTP ' + tokenResp.status);
-    const raw = await tokenResp.json();
-    const tokens = normalizeTokens(raw);
+    const data = await safeJson(tokenResp);
+    const tokens = normalizeTokens(data);
+
     await saveTokens(tokens);
+    chrome.runtime.sendMessage({ type: 'AUTH_TOKEN_SAVED' });
+
     return tokens;
   } catch (err) {
     console.error('[auth] exchange failed', err);
     clearClientId();
+    chrome.runtime.sendMessage({ type: 'AUTH_FAILED' });
 
     return null;
   }
@@ -106,6 +112,7 @@ function normalizeTokens(raw: any): Tokens {
     : raw.expires_in
     ? now + Number(raw.expires_in) * 1000
     : undefined;
+    
   return {
     accessToken: raw.access_token ?? raw.AccessToken ?? raw.token ?? '',
     refreshToken: raw.refresh_token ?? raw.RefreshToken,

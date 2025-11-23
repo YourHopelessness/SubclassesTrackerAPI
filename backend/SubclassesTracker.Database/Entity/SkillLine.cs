@@ -7,7 +7,7 @@ namespace SubclassesTracker.Database.Entity
     /// Represents a skill line in the game, which groups related abilities and skills.
     /// </summary>
     [Table("skillLine")]
-    public class SkillLine
+    public class SkillLine : IHaveIdentifier
     {
         /// <summary>
         /// Unique identifier for the skill line.
@@ -38,9 +38,16 @@ namespace SubclassesTracker.Database.Entity
         public Icon? Icon { get; set; }
 
         /// <summary>
+        /// Class type identifier for the skill line, if LineTypeId = 5.
+        /// </summary>
+        [Column("classTypeId")]
+        public int? ClassTypeId { get; set; }
+        public Class? Class { get; set; }
+
+        /// <summary>
         /// Collection of skill tree entries associated with this skill line.
         /// </summary>
-        public ICollection<SkillTreeEntry> SkillTreeEntries { get; set; } = new HashSet<SkillTreeEntry>();
+        public ICollection<SkillTreeEntry> SkillTreeEntries { get; set; } = null!;
     }
 
 }

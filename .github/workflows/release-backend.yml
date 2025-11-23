@@ -1,4 +1,4 @@
-name: Build and Deploy Backend (Aspire, API, Cleaner)
+name: Build and Deploy API
 
 on:
   workflow_dispatch:
@@ -6,7 +6,8 @@ on:
     tags:
       - 'backend-release-*'
 
-jobs:
+jobs:  
+  # Build the app
   build:
     runs-on: ubuntu-latest
     defaults:
@@ -20,10 +21,10 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      # Restore
       - name: Restore dependencies
         run: dotnet restore SubclassesTrackerExtension.sln
-
+  
+  # Make release build
   publish:
     needs: build
     runs-on: ubuntu-latest
@@ -37,26 +38,17 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+          
+      - name: Publish
+        run: dotnet publish SubclassesTracker.Api/SubclassesTracker.Api.csproj -c Release -o publish
 
-      # Publish API
-      - name: Publish API
-        run: dotnet publish SubclassesTracker.Api/SubclassesTracker.Api.csproj -c Release -o publish/api
-
-      # Publish Cleaner
-      - name: Publish Cleaner
-        run: dotnet publish SubclassesTracker.CleanupService/SubclassesTracker.CleanupService.csproj -c Release -o publish/cleaner
-
-      # Publish Aspire Host
-      - name: Publish Aspire AppHost
-        run: dotnet publish SubclassesTracker.AppHost/SubclassesTracker.AppHost.csproj -c Release -o publish/apphost
-
-      # Upload combined artifacts
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: subclasses-backend
+          name: SubclassesTracker.Api
           path: backend/publish
-
+    
+  # Deploy to the server
   deploy:
     needs: publish
     runs-on: ubuntu-latest
@@ -67,67 +59,73 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: subclasses-backend
+          name: SubclassesTracker.Api
           path: backend/publish
 
-      # Copy each part separately
-      - name: Stop services before update
+      # 1) Copy the new build to the server
+      - name: Copy build to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          script: | 
+            sudo systemctl stop subclasses-api
+          host: ${{ secrets.YOKO_HOST }}
+          username: ${{ secrets.YOKO_USER }}
+          key: ${{ secrets.YOKO_KEY }}
+          source: "backend/publish/*"
+          target: ${{ secrets.YOKO_TARGET }}
+          strip_components: 1
+          rm: true
+
+      # 2) Stop → deploy → start the service
+      - name: Restart systemd service
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.YOKO_HOST }}
           username: ${{ secrets.YOKO_USER }}
           key: ${{ secrets.YOKO_KEY }}
           script: |
-            sudo systemctl stop subclasses-api || true
-            sudo systemctl stop subclasses-cleaner || true
-            sudo systemctl stop subclasses-aspire || true
-
-      # API
-      - name: Deploy API
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.YOKO_HOST }}
-          username: ${{ secrets.YOKO_USER }}
-          key: ${{ secrets.YOKO_KEY }}
-          source: "backend/publish/api/*"
-          target: ${{ secrets.YOKO_API_TARGET }}
-          strip_components: 1
-          rm: true
-
-      # Cleaner
-      - name: Deploy Cleaner
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.YOKO_HOST }}
-          username: ${{ secrets.YOKO_USER }}
-          key: ${{ secrets.YOKO_KEY }}
-          source: "backend/publish/cleaner/*"
-          target: ${{ secrets.YOKO_CLEANER_TARGET }}
-          strip_components: 1
-          rm: true
-
-      # Aspire Host
-      - name: Deploy Aspire Host
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.YOKO_HOST }}
-          username: ${{ secrets.YOKO_USER }}
-          key: ${{ secrets.YOKO_KEY }}
-          source: "backend/publish/apphost/*"
-          target: ${{ secrets.YOKO_ASPIRE_TARGET }}
-          strip_components: 1
-          rm: true
-
-      - name: Restart services
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.YOKO_HOST }}
-          username: ${{ secrets.YOKO_USER }}
-          key: ${{ secrets.YOKO_KEY }}
-          script: |
-            sudo systemctl start subclasses-aspire
+            set -e
             sudo systemctl start subclasses-api
-            sudo systemctl start subclasses-cleaner
-            sudo systemctl status subclasses-aspire --no-pager
             sudo systemctl status subclasses-api --no-pager
-            sudo systemctl status subclasses-cleaner --no-pager
+
+      - name: Change ownership
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.YOKO_HOST }}
+          username: ${{ secrets.YOKO_USER }}
+          key: ${{ secrets.YOKO_KEY }}
+          script: | 
+            TARGET="${{ secrets.YOKO_TARGET }}/publish"
+            APPUSER="${{ secrets.YOKO_USER_API }}"
+            
+            sudo mkdir -p $TARGET/Saves
+            sudo chown -R $APPUSER:$APPUSER "$TARGET" || true
+            sudo chmod -R 750 "$TARGET/Saves"
+      
+     # 3) Health check
+      - name: Check service status
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+            host: ${{ secrets.YOKO_HOST }}
+            username: ${{ secrets.YOKO_USER }}
+            key: ${{ secrets.YOKO_KEY }}
+            script: |
+                echo "Waiting 30 seconds for API to start..."
+                sleep 30
+          
+                MAX_RETRIES=10
+                RETRY_DELAY=5
+                URL="http://127.0.0.1:5000/api/HealthCheck/health"
+
+                for i in $(seq 1 $MAX_RETRIES); do
+                  echo "Attempt $i/$MAX_RETRIES: Checking $URL..."
+                  if curl --fail --silent --max-time 5 "$URL" > /dev/null; then
+                    echo "API is healthy!"
+                    exit 0
+                  fi
+                  echo "API not ready yet, retrying in $RETRY_DELAY seconds..."
+                  sleep $RETRY_DELAY
+                done
+          
+                echo "API did not become healthy after $MAX_RETRIES attempts"
+                exit 1

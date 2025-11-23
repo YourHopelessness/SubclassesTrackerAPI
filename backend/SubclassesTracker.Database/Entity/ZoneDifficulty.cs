@@ -6,8 +6,12 @@ namespace SubclassesTracker.Database.Entity
     /// Represents the difficulty level of a zone in the game, linking zones to their respective difficulty levels and indicating if they are in hard mode.
     /// </summary>
     [Table("zoneDifficulty")]
-    public class ZoneDifficulty
+    public class ZoneDifficulty : IHaveIdentifier
     {
+        /// <summary>
+        /// Id of the zone difficulties
+        /// </summary>
+        public int Id { get; set; }
         /// <summary>
         /// Unique identifier for the zone difficulty.
         /// </summary>
