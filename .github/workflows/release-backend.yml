@@ -1,4 +1,4 @@
-name: Build and Deploy API
+name: Build and Deploy Backend (Aspire, API, Cleaner)
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
     tags:
       - 'backend-release-*'
 
-jobs:     
+jobs:
   build:
     runs-on: ubuntu-latest
     defaults:
@@ -20,9 +20,10 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      # Restore
       - name: Restore dependencies
         run: dotnet restore SubclassesTrackerExtension.sln
-        
+
   publish:
     needs: build
     runs-on: ubuntu-latest
@@ -36,16 +37,26 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
-          
-      - name: Publish
-        run: dotnet publish SubclassesTracker.Api.csproj -c Release -o publish
 
+      # Publish API
+      - name: Publish API
+        run: dotnet publish SubclassesTracker.Api/SubclassesTracker.Api.csproj -c Release -o publish/api
+
+      # Publish Cleaner
+      - name: Publish Cleaner
+        run: dotnet publish SubclassesTracker.CleanupService/SubclassesTracker.CleanupService.csproj -c Release -o publish/cleaner
+
+      # Publish Aspire Host
+      - name: Publish Aspire AppHost
+        run: dotnet publish SubclassesTracker.AppHost/SubclassesTracker.AppHost.csproj -c Release -o publish/apphost
+
+      # Upload combined artifacts
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SubclassesTracker.Api
+          name: subclasses-backend
           path: backend/publish
-          
+
   deploy:
     needs: publish
     runs-on: ubuntu-latest
@@ -56,31 +67,67 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: SubclassesTracker.Api
+          name: subclasses-backend
           path: backend/publish
 
-      # 1) Copy the new build to the server
-      - name: Copy build to server
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          script: | 
-            sudo systemctl stop subclasses-api
-          host: ${{ secrets.YOKO_HOST }}
-          username: ${{ secrets.YOKO_USER }}
-          key: ${{ secrets.YOKO_KEY }}
-          source: "backend/publish/*"
-          target: ${{ secrets.YOKO_TARGET }}
-          strip_components: 1
-          rm: true
-
-      # 2) Stop → deploy → start the service
-      - name: Restart systemd service
+      # Copy each part separately
+      - name: Stop services before update
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.YOKO_HOST }}
           username: ${{ secrets.YOKO_USER }}
           key: ${{ secrets.YOKO_KEY }}
           script: |
-            set -e
+            sudo systemctl stop subclasses-api || true
+            sudo systemctl stop subclasses-cleaner || true
+            sudo systemctl stop subclasses-aspire || true
+
+      # API
+      - name: Deploy API
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.YOKO_HOST }}
+          username: ${{ secrets.YOKO_USER }}
+          key: ${{ secrets.YOKO_KEY }}
+          source: "backend/publish/api/*"
+          target: ${{ secrets.YOKO_API_TARGET }}
+          strip_components: 1
+          rm: true
+
+      # Cleaner
+      - name: Deploy Cleaner
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.YOKO_HOST }}
+          username: ${{ secrets.YOKO_USER }}
+          key: ${{ secrets.YOKO_KEY }}
+          source: "backend/publish/cleaner/*"
+          target: ${{ secrets.YOKO_CLEANER_TARGET }}
+          strip_components: 1
+          rm: true
+
+      # Aspire Host
+      - name: Deploy Aspire Host
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.YOKO_HOST }}
+          username: ${{ secrets.YOKO_USER }}
+          key: ${{ secrets.YOKO_KEY }}
+          source: "backend/publish/apphost/*"
+          target: ${{ secrets.YOKO_ASPIRE_TARGET }}
+          strip_components: 1
+          rm: true
+
+      - name: Restart services
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.YOKO_HOST }}
+          username: ${{ secrets.YOKO_USER }}
+          key: ${{ secrets.YOKO_KEY }}
+          script: |
+            sudo systemctl start subclasses-aspire
             sudo systemctl start subclasses-api
+            sudo systemctl start subclasses-cleaner
+            sudo systemctl status subclasses-aspire --no-pager
             sudo systemctl status subclasses-api --no-pager
+            sudo systemctl status subclasses-cleaner --no-pager
