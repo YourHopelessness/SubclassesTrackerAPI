@@ -48,7 +48,7 @@ jobs:
 
       # Publish Aspire Host
       - name: Publish Aspire AppHost
-        run: dotnet publish SubclassesTracker.AppHost/SubclassesTracker.AppHost.csproj -c Release -o publish/apphost
+        run: dotnet publish SubclassesTracker.AspireHost/SubclassesTracker.AspireHost.csproj -c Release -o publish/apphost
 
       # Upload combined artifacts
       - name: Upload artifact
