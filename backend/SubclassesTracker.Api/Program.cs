@@ -24,7 +24,7 @@ using SubclassesTracker.Database.Context;
 using SubclassesTracker.Database.Repository;
 using SubclassesTracker.GraphQL;
 using SubclassesTracker.GraphQL.Services;
-using SubclassesTracker.Models;
+using SubclassesTracker.Models.Configuration;
 
 // For SQLite
 Batteries.Init();
@@ -66,7 +66,7 @@ builder.Services.AddCors(opts =>
 
 // Register graphql services
 builder.Services.AddScoped<IGraphQLClientExecutor, GraphQLClientExecutor>();
-builder.Services.AddScoped<IQueryLoader, EmbeddedQueryLoader>();
+builder.Services.AddScoped<IQueryLoader, ResxQueryLoader>();
 builder.Services.AddScoped<IGraphQLGetService, GraphQLGetService>();
 
 // Register services
@@ -99,6 +99,7 @@ builder.Services.AddTransient<BearerPropagationHandler>();
 builder.Services.AddDbContext<EsoContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SkillLinesDb")));
 builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
+builder.Services.AddTransient<PgScriptInit>();
 
 // Register the background queue and hosted service
 builder.Services.AddHostedService<QueuedHostedService>();
@@ -146,7 +147,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var parquetDb = services.GetRequiredService<ParquetCacheContext>();
-        await DbInitializer.SeedDatasetsAsync(services);
+        await DbInitializer.SeedDatasetsAsync(services, default);
     }
     catch (Exception ex)
     {

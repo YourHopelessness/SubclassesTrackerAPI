@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using SubclassesTracker.Api.Utils;
-using SubclassesTracker.Models;
+using SubclassesTracker.Models.Configuration;
 using SubclassesTracker.Models.Requests.Api;
 using SubclassesTracker.Models.Responses;
 using System.Collections.Concurrent;

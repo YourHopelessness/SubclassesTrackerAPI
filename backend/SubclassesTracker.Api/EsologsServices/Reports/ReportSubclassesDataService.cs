@@ -86,8 +86,10 @@ namespace SubclassesTracker.Api.EsologsServices.Reports
         {
             skillsDict ??= await loaderService.LoadSkillsAsync(token);
 
-            var fightIdList = fightId?.Split('.').Select(int.Parse).ToList();
             var fights = await dataService.GetFigthsAsync(logId, token);
+            var fightIdList = string.Equals(fightId?.ToLower(), "last") ?
+                [fights.Select(f => f.Id).LastOrDefault()] :
+                fightId?.Split('.').Select(int.Parse).ToList();
             var reports = new List<FilteredReport>()
             {
                 new(logId, 0, logId, [.. fights

@@ -5,7 +5,7 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using SubclassesTracker.Caching;
 using SubclassesTracker.Caching.Services;
-using SubclassesTracker.Models;
+using SubclassesTracker.Models.Configuration;
 using SubclassesTracker.Models.Enums;
 using System.Text;
 using static SubclassesTracker.GraphQL.GraphQLClient.GraphQLQueries;

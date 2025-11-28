@@ -7,14 +7,19 @@ namespace SubclassesTracker.Api.Utils.Seed
 {
     public static class DbInitializer
     {
-        public static async Task SeedDatasetsAsync(IServiceProvider services)
+        public static async Task SeedDatasetsAsync(
+            IServiceProvider services, CancellationToken token)
         {
-            using var scope = services.CreateScope();
+            using var scope = services.CreateAsyncScope();
+
+            var scriptInit = scope.ServiceProvider.GetRequiredService<PgScriptInit>();
+            await scriptInit.InitDatabase(token);
+
             var context = scope.ServiceProvider.GetRequiredService<ParquetCacheContext>();
             var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
                 .CreateLogger("DbInitializer");
 
-            await context.Database.MigrateAsync();
+            await context.Database.MigrateAsync(token);
 
             var seedData = GraphQLQueries.QueryDatasets;
 
@@ -23,7 +28,7 @@ namespace SubclassesTracker.Api.Utils.Seed
                 var name = kvp.Key.ToString();
                 var id = kvp.Value;
 
-                var existing = await context.Datasets.FirstOrDefaultAsync(x => x.Name == name);
+                var existing = await context.Datasets.FirstOrDefaultAsync(x => x.Name == name, token);
 
                 if (existing is null)
                 {
@@ -56,7 +61,7 @@ namespace SubclassesTracker.Api.Utils.Seed
                 }
             }
 
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(token);
         }
     }
 }

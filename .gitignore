@@ -9,3 +9,6 @@
 **/bin
 *.sqbpro
 *.user
+/backend/SubclassesTracker.AspireHost/appsettings.Production.json
+/backend/SubclassesTracker.AspireHost/NuGet.config
+/backend/SubclassesTracker.AspireHost/aspire-output/.env.Production
