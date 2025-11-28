@@ -37,7 +37,7 @@ jobs:
             -p:PublishProfile=DefaultContainer \
             -p:ContainerImageTag=${{ github.ref_name }}
 
-          docker tag api:latest ghcr.io/$OWNER/subclasses-api:${{ github.ref_name }}
+          docker tag api:${{ github.ref_name }} ghcr.io/$OWNER/subclasses-api:${{ github.ref_name }}
           docker push ghcr.io/$OWNER/subclasses-api:${{ github.ref_name }}
 
       # Cleaner
@@ -49,7 +49,7 @@ jobs:
             -p:PublishProfile=DefaultContainer \
             -p:ContainerImageTag=${{ github.ref_name }}
 
-          docker tag cleaner:latest ghcr.io/$OWNER/subclasses-cleaner:${{ github.ref_name }}
+          docker tag cleaner:${{ github.ref_name }} ghcr.io/$OWNER/subclasses-cleaner:${{ github.ref_name }}
           docker push ghcr.io/$OWNER/subclasses-cleaner:${{ github.ref_name }}
 
       - name: Upload docker compose file
