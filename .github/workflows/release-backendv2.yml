@@ -31,24 +31,26 @@ jobs:
       # API
       - name: Publish API container
         run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           dotnet publish SubclassesTracker.Api/SubclassesTracker.Api.csproj \
             -c Release \
             -p:PublishProfile=DefaultContainer \
             -p:ContainerImageTag=${{ github.ref_name }}
 
-          docker tag api:latest ghcr.io/${{ github.repository_owner }}/subclasses-api:${{ github.ref_name }}
-          docker push ghcr.io/${{ github.repository_owner }}/subclasses-api:${{ github.ref_name }}
+          docker tag api:latest ghcr.io/$OWNER/subclasses-api:${{ github.ref_name }}
+          docker push ghcr.io/$OWNER/subclasses-api:${{ github.ref_name }}
 
       # Cleaner
       - name: Publish Cleaner container
         run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           dotnet publish SubclassesTracker.CleanupService/SubclassesTracker.CleanupService.csproj \
             -c Release \
             -p:PublishProfile=DefaultContainer \
             -p:ContainerImageTag=${{ github.ref_name }}
 
-          docker tag cleaner:latest ghcr.io/${{ github.repository_owner }}/subclasses-cleaner:${{ github.ref_name }}
-          docker push ghcr.io/${{ github.repository_owner }}/subclasses-cleaner:${{ github.ref_name }}
+          docker tag cleaner:latest ghcr.io/$OWNER/subclasses-cleaner:${{ github.ref_name }}
+          docker push ghcr.io/$OWNER/subclasses-cleaner:${{ github.ref_name }}
 
       - name: Upload docker compose file
         uses: actions/upload-artifact@v4
