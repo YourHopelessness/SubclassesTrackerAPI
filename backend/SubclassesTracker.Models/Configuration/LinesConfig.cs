@@ -1,4 +1,4 @@
-﻿namespace SubclassesTracker.Models
+﻿namespace SubclassesTracker.Models.Configuration
 {
     /// <summary>
     /// Configuration class for service settings.

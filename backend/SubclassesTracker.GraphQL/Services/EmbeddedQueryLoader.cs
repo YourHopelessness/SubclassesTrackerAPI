@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+﻿using System.Text;
 
 namespace SubclassesTracker.GraphQL.Services
 {
@@ -13,23 +13,20 @@ namespace SubclassesTracker.GraphQL.Services
     }
 
     /// <summary>
-    /// Loader for embedded GraphQL queries.
+    /// Loader for GraphQL queries.
     /// </summary>
-    public class EmbeddedQueryLoader : IQueryLoader
+    public class ResxQueryLoader : IQueryLoader
     {
-        private readonly Assembly _asm = typeof(EmbeddedQueryLoader).Assembly;
-
-        public async Task<string> LoadAsync(string queryName, CancellationToken token = default)
+        public Task<string> LoadAsync(string queryName, CancellationToken token = default)
         {
-            var name = _asm.GetManifestResourceNames()
-                .FirstOrDefault(x => x.EndsWith($"{queryName}.graphql", StringComparison.Ordinal))
-                ?? throw new FileNotFoundException($"GraphQL query '{queryName}' not found in resources.");
+            var obj = GraphQLResourcers.ResourceManager.GetObject(queryName)
+                ?? throw new FileNotFoundException($"GraphQL query '{queryName}' not found in .resx.");
 
-            await using var s = _asm.GetManifestResourceStream(name)
-                ?? throw new InvalidOperationException($"Resource '{name}' resolved but stream is null.");
+            if (obj is not byte[] bytes)
+                throw new InvalidOperationException($"Resource '{queryName}' is not byte[].");
 
-            using var r = new StreamReader(s);
-            return await r.ReadToEndAsync(token);
+            var text = Encoding.UTF8.GetString(bytes);
+            return Task.FromResult(text);
         }
     }
 }
