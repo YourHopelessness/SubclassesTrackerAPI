@@ -40,7 +40,7 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
       OTEL_SERVICE_NAME: "api"
     ports:
-      - "127.0.0.1:7192:7192"
+      - "127.0.0.1:7192:${API_PORT}"
     expose:
       - "${API_PORT}"
     depends_on:
