@@ -49,6 +49,8 @@ services:
     networks:
       - "aspire"
     restart: "always"
+    volumes:
+      - /var/lib/subclasses:/var/lib/subclasses
   cleaner:
     image: "${CLEANER_IMAGE}"
     environment:
