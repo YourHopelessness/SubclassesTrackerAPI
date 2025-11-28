@@ -46,6 +46,12 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Utils/Seed/Scripts/**"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <PropertyGroup>
     <PublishProfile>DefaultContainer</PublishProfile>
     <ContainerImageName>api</ContainerImageName>
