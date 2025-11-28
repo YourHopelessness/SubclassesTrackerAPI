@@ -9,6 +9,7 @@ namespace SubclassesTracker.Api.Utils.Seed
             using var scope = sp.CreateScope();
             var configuration = scope.ServiceProvider
                 .GetRequiredService<IConfiguration>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<PgScriptInit>>();
 
             var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
 
@@ -24,7 +25,10 @@ namespace SubclassesTracker.Api.Utils.Seed
             var appUser = builder.Username;
             var appPassword = builder.Password;
 
-            foreach (var file in Directory.GetFiles(sqlPath, "*.sql").OrderBy(x => x))
+            var files = Directory.GetFiles(sqlPath, "*.sql").OrderBy(x => x);
+            logger.LogInformation("Found {Count} SQL scripts to execute", files.Count());
+
+            foreach (var file in files)
             {
                 var sql = await File.ReadAllTextAsync(file, ct);
 
@@ -34,7 +38,7 @@ namespace SubclassesTracker.Api.Utils.Seed
                     .Replace("${DatabaseName}", appDb);
 
                 using var cmd = new NpgsqlCommand(sql, conn);
-                await cmd.ExecuteNonQueryAsync(ct);
+                var rows = await cmd.ExecuteNonQueryAsync(ct);
             }
         }
     }

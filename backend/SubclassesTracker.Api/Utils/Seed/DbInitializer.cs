@@ -11,18 +11,19 @@ namespace SubclassesTracker.Api.Utils.Seed
             IServiceProvider services, CancellationToken token)
         {
             using var scope = services.CreateAsyncScope();
-
-            var scriptInit = scope.ServiceProvider.GetRequiredService<PgScriptInit>();
-            await scriptInit.InitDatabase(token);
-
-            var context = scope.ServiceProvider.GetRequiredService<ParquetCacheContext>();
             var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
                 .CreateLogger("DbInitializer");
 
+            logger.LogInformation("Create user");
+            var scriptInit = scope.ServiceProvider.GetRequiredService<PgScriptInit>();
+            await scriptInit.InitDatabase(token);
+
+            logger.LogInformation("Migrate the database");
+            var context = scope.ServiceProvider.GetRequiredService<ParquetCacheContext>();
             await context.Database.MigrateAsync(token);
 
+            logger.LogInformation("Seed datasets");
             var seedData = GraphQLQueries.QueryDatasets;
-
             foreach (var kvp in seedData)
             {
                 var name = kvp.Key.ToString();
