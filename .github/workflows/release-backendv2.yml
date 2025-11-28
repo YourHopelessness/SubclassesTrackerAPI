@@ -1,4 +1,4 @@
-name: Build and Deploy Backend (Aspire, API, Cleaner)
+name: Build and Deploy Backend (Docker + Aspire Compose)
 
 on:
   workflow_dispatch:
@@ -12,6 +12,7 @@ jobs:
     defaults:
       run:
         working-directory: backend
+
     steps:
       - uses: actions/checkout@v4
 
@@ -20,114 +21,100 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      # Restore
-      - name: Restore dependencies
-        run: dotnet restore SubclassesTrackerExtension.sln
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-  publish:
+      # API
+      - name: Publish API container
+        run: |
+          dotnet publish SubclassesTracker.Api/SubclassesTracker.Api.csproj \
+            -c Release \
+            -p:PublishProfile=DefaultContainer \
+            -p:ContainerImageTag=${{ github.ref_name }}
+
+          docker tag api:latest ghcr.io/${{ github.repository_owner }}/subclasses-api:${{ github.ref_name }}
+          docker push ghcr.io/${{ github.repository_owner }}/subclasses-api:${{ github.ref_name }}
+
+      # Cleaner
+      - name: Publish Cleaner container
+        run: |
+          dotnet publish SubclassesTracker.CleanupService/SubclassesTracker.CleanupService.csproj \
+            -c Release \
+            -p:PublishProfile=DefaultContainer \
+            -p:ContainerImageTag=${{ github.ref_name }}
+
+          docker tag cleaner:latest ghcr.io/${{ github.repository_owner }}/subclasses-cleaner:${{ github.ref_name }}
+          docker push ghcr.io/${{ github.repository_owner }}/subclasses-cleaner:${{ github.ref_name }}
+
+      - name: Upload docker compose file
+        uses: actions/upload-artifact@v4
+        with:
+          name: aspire-compose
+          path: backend/SubclassesTracker.AspireHost/aspire-output/docker-compose.yaml
+
+  deploy:
     needs: build
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
+
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
-
-      # Publish API
-      - name: Publish API
-        run: dotnet publish SubclassesTracker.Api/SubclassesTracker.Api.csproj -c Release -o publish/api
-
-      # Publish Cleaner
-      - name: Publish Cleaner
-        run: dotnet publish SubclassesTracker.CleanupService/SubclassesTracker.CleanupService.csproj -c Release -o publish/cleaner
-
-      # Publish Aspire Host
-      - name: Publish Aspire AppHost
-        run: dotnet publish SubclassesTracker.AspireHost/SubclassesTracker.AspireHost.csproj -c Release -o publish/apphost
-
-      # Upload combined artifacts
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: subclasses-backend
-          path: backend/publish
-
-  deploy:
-    needs: publish
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - name: Download artifact
+      - name: Download compose
         uses: actions/download-artifact@v4
         with:
-          name: subclasses-backend
-          path: backend/publish
+          name: aspire-compose
+          path: backend/compose
 
-      # Copy each part separately
-      - name: Stop services before update
+      # Upload only the docker-compose itself
+      - name: Upload docker compose to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.YOKO_HOST }}
+          username: ${{ secrets.YOKO_USER }}
+          key: ${{ secrets.YOKO_KEY }}
+          source: "backend/compose/docker-compose.yaml"
+          target: ${{ secrets.YOKO_COMPOSE_TARGET }}
+          strip_components: 2
+          rm: true
+
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.YOKO_HOST }}
           username: ${{ secrets.YOKO_USER }}
           key: ${{ secrets.YOKO_KEY }}
           script: |
-            sudo systemctl stop subclasses-api || true
-            sudo systemctl stop subclasses-cleaner || true
-            sudo systemctl stop subclasses-aspire || true
+            cd ${{ secrets.YOKO_COMPOSE_TARGET }}
 
-      # API
-      - name: Deploy API
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.YOKO_HOST }}
-          username: ${{ secrets.YOKO_USER }}
-          key: ${{ secrets.YOKO_KEY }}
-          source: "backend/publish/api/*"
-          target: ${{ secrets.YOKO_API_TARGET }}
-          strip_components: 1
-          rm: true
+            echo "Create .env..."
 
-      # Cleaner
-      - name: Deploy Cleaner
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.YOKO_HOST }}
-          username: ${{ secrets.YOKO_USER }}
-          key: ${{ secrets.YOKO_KEY }}
-          source: "backend/publish/cleaner/*"
-          target: ${{ secrets.YOKO_CLEANER_TARGET }}
-          strip_components: 1
-          rm: true
+            cat > .env <<EOF
+            API_IMAGE=ghcr.io/${{ github.repository_owner }}/subclasses-api:${{ github.ref_name }}
+            CLEANER_IMAGE=ghcr.io/${{ github.repository_owner }}/subclasses-cleaner:${{ github.ref_name }}
+            
+            DEFAULTUSER=${{ secrets.DEFAULTUSER }}
+            DEFAULTPASS=${{ secrets.DEFAULTPASS }}
+            
+            API_PORT=${{ secrets.API_PORT }}
+            CONNSTRING=${{ secrets.CONNSTRING }}
+            DEFAULTCONNSTRING=${{ secrets.DEFAULTCONNSTRING }}
+            EOF
 
-      # Aspire Host
-      - name: Deploy Aspire Host
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.YOKO_HOST }}
-          username: ${{ secrets.YOKO_USER }}
-          key: ${{ secrets.YOKO_KEY }}
-          source: "backend/publish/apphost/*"
-          target: ${{ secrets.YOKO_ASPIRE_TARGET }}
-          strip_components: 1
-          rm: true
+            echo ".env created:"
+            cat .env
 
-      - name: Restart services
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.YOKO_HOST }}
-          username: ${{ secrets.YOKO_USER }}
-          key: ${{ secrets.YOKO_KEY }}
-          script: |
-            sudo systemctl start subclasses-aspire
-            sudo systemctl start subclasses-api
-            sudo systemctl start subclasses-cleaner
-            sudo systemctl status subclasses-aspire --no-pager
-            sudo systemctl status subclasses-api --no-pager
-            sudo systemctl status subclasses-cleaner --no-pager
+            
+            docker compose --env-file .env pull
+            docker compose --env-file .env up -d --remove-orphans
+
+            echo "Prune..."
+            docker container prune -f
+            docker image prune -f
+            docker system df
+
+            docker ps
