@@ -31,7 +31,6 @@ services:
       OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
       HTTP_PORTS: "${API_PORT}"
-      HTTPS_PORTS: "${API_PORT}"
       ConnectionStrings__ParquetCache: "${CONNSTRING}"
       ConnectionStrings__DefaultDbConn: "${DEFAULTCONNSTRING}"
       CachingSettings__CacheRootPath: "/var/lib/subclasses/parquet/"
