@@ -92,12 +92,13 @@ jobs:
           key: ${{ secrets.YOKO_KEY }}
           script: |
             cd ${{ secrets.YOKO_COMPOSE_TARGET }}
+            OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
 
             echo "Create .env..."
 
             cat > .env <<EOF
-            API_IMAGE=ghcr.io/${{ github.repository_owner }}/subclasses-api:${{ github.ref_name }}
-            CLEANER_IMAGE=ghcr.io/${{ github.repository_owner }}/subclasses-cleaner:${{ github.ref_name }}
+            API_IMAGE=ghcr.io/$OWNER/subclasses-api:${{ github.ref_name }}
+            CLEANER_IMAGE=ghcr.io/$OWNER/subclasses-cleaner:${{ github.ref_name }}
             
             DEFAULTUSER=${{ secrets.DEFAULTUSER }}
             DEFAULTPASS=${{ secrets.DEFAULTPASS }}
