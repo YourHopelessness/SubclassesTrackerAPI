@@ -58,7 +58,7 @@ namespace SubclassesTracker.Caching.Services
                 .OrderByDescending(f => f.CachedAt)
                 .FirstOrDefault(f => f.CachedAt + TimeSpan.FromSeconds(f.Ttl) > DateTimeOffset.UtcNow);
 
-            if (file == null) return new();
+            if (file == null) return null;
 
             // Determine if T is a collection type
             var tType = typeof(T);

@@ -25,11 +25,8 @@ namespace SubclassesTracker.Caching.Parquet
     /// Data writer for dynamic Parquet files.
     /// </summary>
     public class DynamicParquetWriter(
-        ILogger<DynamicParquetWriter> logger,
-        IOptions<CachingSettings> options) : IDynamicParquetWriter
+        ILogger<DynamicParquetWriter> logger) : IDynamicParquetWriter
     {
-        private readonly CachingSettings cachingSettings = options.Value;
-
         public async Task WriteAsync(
             IEnumerable<Dictionary<string, object?>> rows,
             string outputPath,
