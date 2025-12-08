@@ -119,6 +119,7 @@ builder.Services.Configure<HttpClientTraceInstrumentationOptions>(o =>
 {
     o.RecordException = true;
 });
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
 builder.Logging.ClearProviders();
 builder.Logging.AddJsonConsole();
 builder.Logging.AddOpenTelemetry();
@@ -170,6 +171,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseRouting();
+app.UseMiddleware<OtelExceptionHandlerMiddleware>();
 app.UseMiddleware<EnsureFreshTokenMiddleware>();
 app.MapControllers();
 
